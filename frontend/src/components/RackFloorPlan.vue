@@ -192,9 +192,11 @@ function onRotateMove(ev: PointerEvent) {
   const r = racks.value.find((x) => x.id === rotId);
   if (!r) return;
   rotMoved = true;
-  const deg = (Math.atan2(ev.clientY - rotCenter.y, ev.clientX - rotCenter.x) * 180) / Math.PI + 90;
-  // 拖曳吸附到 0 / 90 / 180 / 270（機櫃擺放只需正交方向）
-  r.pos_rot = ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
+  let deg = (Math.atan2(ev.clientY - rotCenter.y, ev.clientX - rotCenter.x) * 180) / Math.PI + 90;
+  deg = ((deg % 360) + 360) % 360;
+  // 任意角度；但接近正交(±6°)時軟吸附到 0/90/180/270，方便對齊牆面。
+  const nearest = ((Math.round(deg / 90) * 90) % 360 + 360) % 360;
+  r.pos_rot = Math.abs(deg - nearest) <= 6 ? nearest : Math.round(deg);
   dirty.value = true;
 }
 function onRotateUp() {
