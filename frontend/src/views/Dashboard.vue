@@ -444,4 +444,22 @@ onMounted(() => { void load(); void loadPins(); });
   font-size: 12px;
   opacity: 0.85;
 }
+
+/* 手機：固定四欄網格(140 160 1fr 120 ≈ 456px)會比窄卡片寬 → 右側 CIDR/數量
+   被推出畫面外。改 flex 換行：單位+CIDR 一行、使用率長條獨佔一行、數量靠右。
+   對只有 icon+名稱的「常用機房/機櫃」列也安全（無 bar/num，就單純並排）。 */
+@media (max-width: 640px) {
+  .row-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 4px;
+  }
+  .row-line > * { min-width: 0; }
+  .row-cust { flex: 0 1 auto; overflow: hidden; }
+  .row-cidr { flex: 1 1 auto; }
+  .row-bar  { flex: 1 1 100%; }
+  .row-num  { flex: 0 0 auto; margin-left: auto; }
+}
 </style>

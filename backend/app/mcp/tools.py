@@ -1109,6 +1109,171 @@ async def reject_ip_request(
     return {"id": str(res.id), "status": res.status}
 
 
+# ─────────────────── 網路工具（純運算，對應「網路工具」頁）───────────────────
+# 邏輯共用 app/services/nettools.py；這裡只是 MCP fn 簽章包裝（session/user 不用）。
+# 失敗時把 NetToolError 翻成 IPAMToolError，讓 LLM 收到人讀錯誤而非 500。
+
+async def calc_ip_info(session: AsyncSession, *, user: User, ip: str) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.ip_info(ip)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_cidr_info(session: AsyncSession, *, user: User, cidr: str) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.cidr_info(cidr)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_cidr_split(
+    session: AsyncSession, *, user: User, cidr: str, new_prefix: int,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.cidr_split(cidr, int(new_prefix))
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_eui64(
+    session: AsyncSession, *, user: User, mac: str, prefix: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.eui64(mac, prefix)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_ip_in_cidr(
+    session: AsyncSession, *, user: User, ip: str, cidr: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.ip_in_cidr(ip, cidr)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_cidr_relation(
+    session: AsyncSession, *, user: User, a: str, b: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.cidr_relation(a, b)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_range_to_cidr(
+    session: AsyncSession, *, user: User, start: str, end: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.range_to_cidr(start, end)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_cidr_to_range(
+    session: AsyncSession, *, user: User, cidr: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.cidr_to_range(cidr)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_aggregate(
+    session: AsyncSession, *, user: User, cidrs: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.aggregate(cidrs)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_netmask(
+    session: AsyncSession, *, user: User, value: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.netmask(value)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_mac_format(
+    session: AsyncSession, *, user: User, mac: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.mac_format(mac)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def calc_fqdn(
+    session: AsyncSession, *, user: User, name: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    return nettools.fqdn_parse(name)
+
+
+async def dns_resolve(
+    session: AsyncSession, *, user: User, name: str, type: str = "ANY",
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return await nettools.dns_lookup_live(name, type)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def dns_mail_check(
+    session: AsyncSession, *, user: User, domain: str, dkim_selector: str = "",
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return await nettools.dns_mail(domain, dkim_selector)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
+async def geoip_locate(
+    session: AsyncSession, *, user: User, ip: str,
+) -> dict[str, Any]:
+    from app.services import nettools
+    from app.services.geoip import geoip_lookup
+    try:
+        addr = nettools.parse_addr(ip)
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+    return await geoip_lookup(session, str(addr))
+
+
+async def power_calc(
+    session: AsyncSession, *, user: User,
+    volts: float = 220, amps: float = 16, phase: str = "1", pf: float = 0.95,
+    heat_watts: float | None = None, batt_wh: float | None = None,
+    load_w: float | None = None, pdu_a: float | None = None,
+) -> dict[str, Any]:
+    from app.services import nettools
+    try:
+        return nettools.power_calc(
+            volts=volts, amps=amps, phase=str(phase), pf=pf, heat_watts=heat_watts,
+            batt_wh=batt_wh, load_w=load_w, pdu_a=pdu_a,
+        )
+    except nettools.NetToolError as exc:
+        raise IPAMToolError(str(exc)) from exc
+
+
 # ─────────────────── 工具註冊表（給 MCP / chat 共用）───────────────────
 
 
@@ -1480,5 +1645,122 @@ TOOLS: dict[str, dict[str, Any]] = {
         "description": "ADMIN ONLY. Reject an IP request with a reason.",
         "parameters": {"type": "object", "properties": {
             "request_id": {"type": "string"}, "reason": {"type": "string"}}, "required": ["request_id", "reason"]},
+    },
+    # ─── 網路工具（純運算，不碰資料庫）───
+    "calc_ip_info": {
+        "fn": calc_ip_info,
+        "description": (
+            "Analyse a single IP address: version, private/global/reserved/multicast/"
+            "loopback/link-local flags, decimal/hex/binary, reverse DNS pointer. Pure "
+            "calculation, no lookup against IPAM records."
+        ),
+        "parameters": {"type": "object", "properties": {
+            "ip": {"type": "string", "description": "IPv4 or IPv6"}}, "required": ["ip"]},
+    },
+    "calc_cidr_info": {
+        "fn": calc_cidr_info,
+        "description": (
+            "Analyse a CIDR/network: network & broadcast address, netmask, hostmask, "
+            "prefix length, total addresses, usable host count, first/last host."
+        ),
+        "parameters": {"type": "object", "properties": {
+            "cidr": {"type": "string", "description": "e.g. 192.168.0.0/24"}}, "required": ["cidr"]},
+    },
+    "calc_cidr_split": {
+        "fn": calc_cidr_split,
+        "description": "Split a CIDR into equal-sized smaller subnets of new_prefix length.",
+        "parameters": {"type": "object", "properties": {
+            "cidr": {"type": "string"},
+            "new_prefix": {"type": "integer", "minimum": 0, "maximum": 128}},
+            "required": ["cidr", "new_prefix"]},
+    },
+    "calc_eui64": {
+        "fn": calc_eui64,
+        "description": "Generate the EUI-64 IPv6 address from a MAC and an IPv6 prefix (RFC 4291).",
+        "parameters": {"type": "object", "properties": {
+            "mac": {"type": "string"}, "prefix": {"type": "string", "description": "e.g. 2001:db8::/64"}},
+            "required": ["mac", "prefix"]},
+    },
+    "calc_ip_in_cidr": {
+        "fn": calc_ip_in_cidr,
+        "description": "Check whether an IP falls inside a CIDR; also flags network/broadcast address.",
+        "parameters": {"type": "object", "properties": {
+            "ip": {"type": "string"}, "cidr": {"type": "string"}}, "required": ["ip", "cidr"]},
+    },
+    "calc_cidr_relation": {
+        "fn": calc_cidr_relation,
+        "description": (
+            "Relationship between two CIDRs: equal / a_contains_b / a_within_b / overlap / disjoint."
+        ),
+        "parameters": {"type": "object", "properties": {
+            "a": {"type": "string"}, "b": {"type": "string"}}, "required": ["a", "b"]},
+    },
+    "calc_range_to_cidr": {
+        "fn": calc_range_to_cidr,
+        "description": "Summarise an IP range (start..end) into the minimal set of CIDR blocks.",
+        "parameters": {"type": "object", "properties": {
+            "start": {"type": "string"}, "end": {"type": "string"}}, "required": ["start", "end"]},
+    },
+    "calc_cidr_to_range": {
+        "fn": calc_cidr_to_range,
+        "description": "Convert a CIDR to its first/last address and total address count.",
+        "parameters": {"type": "object", "properties": {"cidr": {"type": "string"}}, "required": ["cidr"]},
+    },
+    "calc_aggregate": {
+        "fn": calc_aggregate,
+        "description": "Collapse/aggregate multiple CIDRs (comma- or space-separated) into the minimal set.",
+        "parameters": {"type": "object", "properties": {
+            "cidrs": {"type": "string", "description": "e.g. '192.168.0.0/24, 192.168.1.0/24'"}},
+            "required": ["cidrs"]},
+    },
+    "calc_netmask": {
+        "fn": calc_netmask,
+        "description": "Convert between prefix length (24 or /24) and dotted netmask (255.255.255.0); returns wildcard/hostmask.",
+        "parameters": {"type": "object", "properties": {"value": {"type": "string"}}, "required": ["value"]},
+    },
+    "calc_mac_format": {
+        "fn": calc_mac_format,
+        "description": "Normalise a MAC into colon/dash/cisco-dot/bare forms; returns OUI, locally-administered & multicast bits.",
+        "parameters": {"type": "object", "properties": {"mac": {"type": "string"}}, "required": ["mac"]},
+    },
+    "calc_fqdn": {
+        "fn": calc_fqdn,
+        "description": "Parse/validate an FQDN (RFC 1123): labels, host, domain, TLD, validity.",
+        "parameters": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]},
+    },
+    "dns_resolve": {
+        "fn": dns_resolve,
+        "description": (
+            "Live DNS resolution via the system resolver: A / AAAA / PTR. Use this to "
+            "resolve a hostname to IPs or do reverse lookup. (Differs from dns_lookup, "
+            "which searches IPAM's own DNS records.)"
+        ),
+        "parameters": {"type": "object", "properties": {
+            "name": {"type": "string"}, "type": {"type": "string", "enum": ["A", "AAAA", "PTR", "ANY"]}},
+            "required": ["name"]},
+    },
+    "dns_mail_check": {
+        "fn": dns_mail_check,
+        "description": "Mail-related DNS diagnostics for a domain: MX, SPF, DMARC, and DKIM (if a selector is given).",
+        "parameters": {"type": "object", "properties": {
+            "domain": {"type": "string"}, "dkim_selector": {"type": "string"}}, "required": ["domain"]},
+    },
+    "geoip_locate": {
+        "fn": geoip_locate,
+        "description": "Geolocate an IP (MaxMind GeoLite2 web service). Requires GeoIP credentials configured in system settings.",
+        "parameters": {"type": "object", "properties": {"ip": {"type": "string"}}, "required": ["ip"]},
+    },
+    "power_calc": {
+        "fn": power_calc,
+        "description": (
+            "Datacenter power/cooling calculations: load watts (V×A×PF, ×√3 for 3-phase), "
+            "BTU/hr heat, UPS runtime minutes (batt_wh / load_w), and PDU 80% safe amps. "
+            "Provide whichever inputs are relevant."
+        ),
+        "parameters": {"type": "object", "properties": {
+            "volts": {"type": "number"}, "amps": {"type": "number"},
+            "phase": {"type": "string", "enum": ["1", "3"]}, "pf": {"type": "number"},
+            "heat_watts": {"type": "number"}, "batt_wh": {"type": "number"},
+            "load_w": {"type": "number"}, "pdu_a": {"type": "number"}}},
     },
 }

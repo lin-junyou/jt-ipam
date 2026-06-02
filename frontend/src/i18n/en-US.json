@@ -199,7 +199,6 @@
     "result": "Result",
     "coords": "Lat/Lng",
     "rack_count": "Racks",
-    "device_count": "Devices",
     "pinned": "Pinned",
     "admin": "Admin",
     "mode": "Mode",
@@ -895,7 +894,13 @@
     "f_last_host": "Last usable",
     "f_modified_eui64": "Modified EUI-64",
     "f_link_local": "Link-local address",
-    "f_interface_id": "Interface ID"
+    "f_interface_id": "Interface ID",
+    "cat_ip": "IP Address",
+    "cat_cidr": "Subnet / CIDR",
+    "cat_mac": "MAC / Vendor",
+    "cat_dns": "DNS / Domain",
+    "cat_power": "Datacenter / Power",
+    "subtitle": "Calculators & lookups for IP / subnet / MAC / DNS / power — all also available in the AI assistant"
   },
   "dns_admin": {
     "title": "DNS Servers",

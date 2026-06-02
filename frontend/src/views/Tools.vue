@@ -41,7 +41,7 @@ import {
   useMessage,
 } from "naive-ui";
 import { apiClient } from "@/api/client";
-import { ToolsIcon, RefreshIcon, AddressesIcon, SubnetsIcon, GridIcon, DevicesIcon, ListIcon, SearchIcon, DnsIcon } from "@/icons";
+import { ToolsIcon, RefreshIcon, AddressesIcon, SubnetsIcon, GridIcon, DevicesIcon, ListIcon, SearchIcon, DnsIcon, PowerIcon } from "@/icons";
 import { fmtDateTime } from "@/utils/datetime";
 
 const msg = useMessage();
@@ -203,118 +203,30 @@ async function runEui64() {
         <span>{{ t("tools_page.title") }}</span>
       </n-space>
     </template>
+    <template #header-extra>
+      <span class="tools-subtitle">{{ t("tools_page.subtitle") }}</span>
+    </template>
     <n-tabs type="line" default-value="ip">
+      <!-- ═══════════ IP 位址 ═══════════ -->
       <n-tab-pane name="ip">
         <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.ip_info') }}</span>
-        </template>
-        <n-space vertical :size="12">
-          <n-space>
-            <n-input v-model:value="ipInput" placeholder="8.8.8.8" style="width: 280px" @keyup.enter="runIpInfo" />
-            <n-button type="primary" @click="runIpInfo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
-          </n-space>
-          <n-descriptions v-if="ipResult" bordered :column="2" label-placement="left"
-                          label-align="right" :label-style="{ whiteSpace: 'nowrap', width: '120px' }">
-            <n-descriptions-item v-for="(v, k) in ipResult" :key="String(k)" :label="fieldLabel(k)">
-              <code>{{ v ?? "—" }}</code>
-            </n-descriptions-item>
-          </n-descriptions>
-        </n-space>
-      </n-tab-pane>
-
-      <n-tab-pane name="cidr">
-        <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><SubnetsIcon /></n-icon>{{ t('tools_page.cidr_info') }}</span>
-        </template>
-        <n-space vertical :size="12">
-          <n-space>
-            <n-input v-model:value="cidrInput" placeholder="192.168.0.0/24" style="width: 280px" @keyup.enter="runCidrInfo" />
-            <n-button type="primary" @click="runCidrInfo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
-          </n-space>
-          <n-descriptions v-if="cidrResult" bordered :column="2" label-placement="left"
-                          label-align="right" :label-style="{ whiteSpace: 'nowrap', width: '120px' }">
-            <n-descriptions-item v-for="(v, k) in cidrResult" :key="String(k)" :label="fieldLabel(k)">
-              <code>{{ v ?? "—" }}</code>
-            </n-descriptions-item>
-          </n-descriptions>
-        </n-space>
-      </n-tab-pane>
-
-      <n-tab-pane name="split">
-        <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.cidr_split') }}</span>
-        </template>
-        <n-space vertical :size="12">
-          <n-space>
-            <n-input v-model:value="splitCidr" placeholder="192.168.0.0/24" style="width: 220px" />
-            <n-input-number v-model:value="splitNew" :min="0" :max="128" placeholder="new prefix" style="width: 140px" />
-            <n-button type="primary" @click="runSplit"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.split_btn") }}</n-button>
-          </n-space>
-          <n-card v-if="splitResult" :title="`${splitResult.count} subnets`">
-            <n-code :code="splitResult.subnets.join('\n')" language="plain" />
-          </n-card>
-        </n-space>
-      </n-tab-pane>
-
-      <n-tab-pane name="oui">
-        <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><DevicesIcon /></n-icon>{{ t('tools_page.oui_tab') }}</span>
-        </template>
-        <n-space vertical :size="16">
-          <n-alert type="info" size="small">
-            {{ t('tools_page.oui_alert_pre') }} <code>manuf</code> {{ t('tools_page.oui_alert_post') }}
-            {{ t('tools_page.oui_alert_note') }}
-          </n-alert>
-          <n-space align="center">
-            <span>{{ t('tools_page.oui_db_count') }}</span>
-            <n-tag type="info">{{ ouiStats?.count?.toLocaleString() ?? "—" }}</n-tag>
-            <span style="margin-left: 16px">{{ t('tools_page.oui_last_updated') }}</span>
-            <n-tag>{{ fmtDateTime(ouiStats?.last_updated) }}</n-tag>
-            <n-button v-if="me?.is_admin" type="primary" size="small"
-                      :loading="ouiRefreshing" @click="refreshOuiDb"
-                      style="margin-left: 16px">
-              <template #icon><n-icon><RefreshIcon /></n-icon></template>
-              {{ t('tools_page.oui_refresh_now') }}
-            </n-button>
-          </n-space>
-          <n-card :title="t('tools_page.oui_lookup_title')" size="small">
-            <n-space>
-              <n-input v-model:value="ouiLookupMac" placeholder="00:11:22:33:44:55"
-                       style="width: 280px" @keyup.enter="runOuiLookup" />
-              <n-button :loading="ouiLookupBusy" @click="runOuiLookup">{{ t('tools_page.oui_query') }}</n-button>
-            </n-space>
-            <div v-if="ouiLookupResult !== null" style="margin-top: 12px">
-              {{ t('tools_page.oui_vendor_label') }}
-              <n-tag v-if="ouiLookupResult" type="success">{{ ouiLookupResult }}</n-tag>
-              <n-tag v-else type="warning">{{ t('tools_page.oui_not_found') }}</n-tag>
-            </div>
-          </n-card>
-        </n-space>
-      </n-tab-pane>
-
-      <n-tab-pane name="eui64">
-        <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><ListIcon /></n-icon>{{ t('tools_page.eui64') }}</span>
-        </template>
-        <n-space vertical :size="12">
-          <n-space>
-            <n-input v-model:value="macInput" placeholder="00:11:22:33:44:55" style="width: 220px" />
-            <n-input v-model:value="prefixInput" placeholder="2001:db8::/64" style="width: 220px" />
-            <n-button type="primary" @click="runEui64">Generate</n-button>
-          </n-space>
-          <n-descriptions v-if="eui64Result" bordered :column="1">
-            <n-descriptions-item v-for="(v, k) in eui64Result" :key="String(k)" :label="fieldLabel(k)">
-              <code>{{ v ?? "—" }}</code>
-            </n-descriptions-item>
-          </n-descriptions>
-        </n-space>
-      </n-tab-pane>
-
-      <n-tab-pane name="netutils">
-        <template #tab>
-          <span style="display:inline-flex;align-items:center;gap:6px"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.netutils') }}</span>
+          <span class="tab-h"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.cat_ip') }}</span>
         </template>
         <div class="nu-grid">
+          <!-- IP 資訊 -->
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.ip_info') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="ipInput" placeholder="8.8.8.8" @keyup.enter="runIpInfo" />
+              <n-button type="primary" class="nu-go" @click="runIpInfo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <n-descriptions v-if="ipResult" bordered :column="2" size="small" style="margin-top:10px" label-placement="left"
+                            label-align="right" :label-style="{ whiteSpace: 'nowrap' }">
+              <n-descriptions-item v-for="(v, k) in ipResult" :key="String(k)" :label="fieldLabel(k)">
+                <code>{{ v ?? "—" }}</code>
+              </n-descriptions-item>
+            </n-descriptions>
+          </n-card>
+
           <!-- IP ∈ CIDR -->
           <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.t_in_cidr') }}</span></template>
             <div class="nu-row">
@@ -325,6 +237,80 @@ async function runEui64() {
             <n-tag v-if="nu.inCidrRes" :type="nu.inCidrRes.contains ? 'success' : 'warning'" style="margin-top:10px">
               {{ nu.inCidrRes.contains ? t('tools_page.contained') : t('tools_page.not_contained') }}
             </n-tag>
+          </n-card>
+
+          <!-- Netmask -->
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><SubnetsIcon /></n-icon>{{ t('tools_page.t_netmask') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="nu.nmVal" placeholder="255.255.255.0 / 24 / /24" @keyup.enter="nuNm" />
+              <n-button type="primary" class="nu-go" @click="nuNm"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <div v-if="nu.nmRes" style="margin-top:10px">
+              <code>/{{ nu.nmRes.prefixlen }}</code> · {{ nu.nmRes.netmask }} · wildcard {{ nu.nmRes.wildcard }}
+            </div>
+          </n-card>
+
+          <!-- EUI-64 -->
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><ListIcon /></n-icon>{{ t('tools_page.eui64') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="macInput" placeholder="00:11:22:33:44:55" @keyup.enter="runEui64" />
+              <n-input v-model:value="prefixInput" placeholder="2001:db8::/64" @keyup.enter="runEui64" />
+              <n-button type="primary" class="nu-go" @click="runEui64"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <n-descriptions v-if="eui64Result" bordered :column="1" size="small" style="margin-top:10px">
+              <n-descriptions-item v-for="(v, k) in eui64Result" :key="String(k)" :label="fieldLabel(k)">
+                <code>{{ v ?? "—" }}</code>
+              </n-descriptions-item>
+            </n-descriptions>
+          </n-card>
+
+          <!-- GeoIP -->
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.t_geoip') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="geo.ip" placeholder="8.8.8.8" @keyup.enter="runGeo" />
+              <n-button type="primary" class="nu-go" @click="runGeo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <div v-if="geo.res" style="margin-top:10px; font-size:12px; line-height:1.7">
+              <div v-if="geo.res.error"><n-tag type="warning">{{ geo.res.error === 'not_configured' ? t('tools_page.geoip_not_set') : geo.res.error }}</n-tag></div>
+              <template v-else>
+                <div><strong>{{ geo.res.country || '—' }}</strong> <span v-if="geo.res.country_iso">({{ geo.res.country_iso }})</span> {{ geo.res.city || '' }} {{ (geo.res.subdivisions||[]).join(' / ') }}</div>
+                <div v-if="geo.res.latitude != null">lat/lng: {{ geo.res.latitude }}, {{ geo.res.longitude }} <span v-if="geo.res.time_zone">· {{ geo.res.time_zone }}</span></div>
+                <div v-if="geo.res.asn">AS{{ geo.res.asn }} {{ geo.res.as_org || '' }}</div>
+                <div v-if="geo.res.network">{{ geo.res.network }}</div>
+              </template>
+            </div>
+          </n-card>
+        </div>
+      </n-tab-pane>
+
+      <!-- ═══════════ 子網路 / CIDR ═══════════ -->
+      <n-tab-pane name="cidr">
+        <template #tab>
+          <span class="tab-h"><n-icon :size="16"><SubnetsIcon /></n-icon>{{ t('tools_page.cat_cidr') }}</span>
+        </template>
+        <div class="nu-grid">
+          <!-- CIDR 資訊 -->
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><SubnetsIcon /></n-icon>{{ t('tools_page.cidr_info') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="cidrInput" placeholder="192.168.0.0/24" @keyup.enter="runCidrInfo" />
+              <n-button type="primary" class="nu-go" @click="runCidrInfo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <n-descriptions v-if="cidrResult" bordered :column="2" size="small" style="margin-top:10px" label-placement="left"
+                            label-align="right" :label-style="{ whiteSpace: 'nowrap' }">
+              <n-descriptions-item v-for="(v, k) in cidrResult" :key="String(k)" :label="fieldLabel(k)">
+                <code>{{ v ?? "—" }}</code>
+              </n-descriptions-item>
+            </n-descriptions>
+          </n-card>
+
+          <!-- CIDR 切割 -->
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.cidr_split') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="splitCidr" placeholder="192.168.0.0/24" />
+              <n-input-number v-model:value="splitNew" :min="0" :max="128" placeholder="new prefix" style="width: 140px; flex:0 0 auto" />
+              <n-button type="primary" class="nu-go" @click="runSplit"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.split_btn") }}</n-button>
+            </div>
+            <n-code v-if="splitResult" :code="splitResult.subnets.join('\n')" language="plain" style="margin-top:10px; display:block" />
           </n-card>
 
           <!-- CIDR 關係 -->
@@ -359,25 +345,22 @@ async function runEui64() {
           </n-card>
 
           <!-- Aggregate -->
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.t_aggregate') }}</span></template>
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.t_aggregate') }}</span></template>
             <div class="nu-row">
               <n-input v-model:value="nu.aggIn" type="textarea" :autosize="{ minRows: 1, maxRows: 4 }" placeholder="192.168.0.0/24, 192.168.1.0/24" />
               <n-button type="primary" class="nu-go" @click="nuAgg"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
             </div>
             <n-code v-if="nu.aggRes" :code="nu.aggRes.aggregated.join('\n')" language="plain" style="margin-top:10px; display:block" />
           </n-card>
+        </div>
+      </n-tab-pane>
 
-          <!-- Netmask -->
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><SubnetsIcon /></n-icon>{{ t('tools_page.t_netmask') }}</span></template>
-            <div class="nu-row">
-              <n-input v-model:value="nu.nmVal" placeholder="255.255.255.0 / 24 / /24" @keyup.enter="nuNm" />
-              <n-button type="primary" class="nu-go" @click="nuNm"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
-            </div>
-            <div v-if="nu.nmRes" style="margin-top:10px">
-              <code>/{{ nu.nmRes.prefixlen }}</code> · {{ nu.nmRes.netmask }} · wildcard {{ nu.nmRes.wildcard }}
-            </div>
-          </n-card>
-
+      <!-- ═══════════ MAC / 廠商 ═══════════ -->
+      <n-tab-pane name="mac">
+        <template #tab>
+          <span class="tab-h"><n-icon :size="16"><DevicesIcon /></n-icon>{{ t('tools_page.cat_mac') }}</span>
+        </template>
+        <div class="nu-grid">
           <!-- MAC format -->
           <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><DevicesIcon /></n-icon>{{ t('tools_page.t_mac') }}</span></template>
             <div class="nu-row">
@@ -394,20 +377,46 @@ async function runEui64() {
             </n-descriptions>
           </n-card>
 
-          <!-- FQDN parse -->
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.t_fqdn') }}</span></template>
-            <div class="nu-row">
-              <n-input v-model:value="nu.fqdnVal" placeholder="sw1.dc.example.com" @keyup.enter="nuFqdn" />
-              <n-button type="primary" class="nu-go" @click="nuFqdn"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
-            </div>
-            <div v-if="nu.fqdnRes" style="margin-top:10px">
-              <n-tag :type="nu.fqdnRes.valid ? 'success' : 'error'">{{ nu.fqdnRes.valid ? t('tools_page.valid') : t('tools_page.invalid') }}</n-tag>
-              <span v-if="nu.fqdnRes.valid" style="margin-left:8px">
-                host=<code>{{ nu.fqdnRes.host }}</code> · domain=<code>{{ nu.fqdnRes.domain ?? '—' }}</code> · tld=<code>{{ nu.fqdnRes.tld ?? '—' }}</code>
-              </span>
-            </div>
+          <!-- MAC 製造商 (OUI) -->
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><DevicesIcon /></n-icon>{{ t('tools_page.oui_tab') }}</span></template>
+            <n-space vertical :size="14">
+              <n-alert type="info" size="small">
+                {{ t('tools_page.oui_alert_pre') }} <code>manuf</code> {{ t('tools_page.oui_alert_post') }}
+                {{ t('tools_page.oui_alert_note') }}
+              </n-alert>
+              <n-space align="center" :wrap="true">
+                <span>{{ t('tools_page.oui_db_count') }}</span>
+                <n-tag type="info">{{ ouiStats?.count?.toLocaleString() ?? "—" }}</n-tag>
+                <span style="margin-left: 16px">{{ t('tools_page.oui_last_updated') }}</span>
+                <n-tag>{{ fmtDateTime(ouiStats?.last_updated) }}</n-tag>
+                <n-button v-if="me?.is_admin" type="primary" size="small"
+                          :loading="ouiRefreshing" @click="refreshOuiDb" style="margin-left: 16px">
+                  <template #icon><n-icon><RefreshIcon /></n-icon></template>
+                  {{ t('tools_page.oui_refresh_now') }}
+                </n-button>
+              </n-space>
+              <div>
+                <div class="nu-row">
+                  <n-input v-model:value="ouiLookupMac" placeholder="00:11:22:33:44:55" @keyup.enter="runOuiLookup" />
+                  <n-button type="primary" class="nu-go" :loading="ouiLookupBusy" @click="runOuiLookup"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t('tools_page.oui_query') }}</n-button>
+                </div>
+                <div v-if="ouiLookupResult !== null" style="margin-top: 10px">
+                  {{ t('tools_page.oui_vendor_label') }}
+                  <n-tag v-if="ouiLookupResult" type="success">{{ ouiLookupResult }}</n-tag>
+                  <n-tag v-else type="warning">{{ t('tools_page.oui_not_found') }}</n-tag>
+                </div>
+              </div>
+            </n-space>
           </n-card>
+        </div>
+      </n-tab-pane>
 
+      <!-- ═══════════ DNS / 網域 ═══════════ -->
+      <n-tab-pane name="dns">
+        <template #tab>
+          <span class="tab-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.cat_dns') }}</span>
+        </template>
+        <div class="nu-grid">
           <!-- DNS lookup -->
           <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.t_dns') }}</span></template>
             <div class="nu-row">
@@ -425,8 +434,22 @@ async function runEui64() {
             </div>
           </n-card>
 
+          <!-- FQDN parse -->
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.t_fqdn') }}</span></template>
+            <div class="nu-row">
+              <n-input v-model:value="nu.fqdnVal" placeholder="sw1.dc.example.com" @keyup.enter="nuFqdn" />
+              <n-button type="primary" class="nu-go" @click="nuFqdn"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
+            </div>
+            <div v-if="nu.fqdnRes" style="margin-top:10px">
+              <n-tag :type="nu.fqdnRes.valid ? 'success' : 'error'">{{ nu.fqdnRes.valid ? t('tools_page.valid') : t('tools_page.invalid') }}</n-tag>
+              <span v-if="nu.fqdnRes.valid" style="margin-left:8px">
+                host=<code>{{ nu.fqdnRes.host }}</code> · domain=<code>{{ nu.fqdnRes.domain ?? '—' }}</code> · tld=<code>{{ nu.fqdnRes.tld ?? '—' }}</code>
+              </span>
+            </div>
+          </n-card>
+
           <!-- 郵件 / DNS 診斷 -->
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.t_mail') }}</span></template>
+          <n-card size="small" class="nu-wide"><template #header><span class="nu-h"><n-icon :size="16"><DnsIcon /></n-icon>{{ t('tools_page.t_mail') }}</span></template>
             <div class="nu-row">
               <n-input v-model:value="mail.domain" placeholder="example.com" @keyup.enter="runMail" />
               <n-input v-model:value="mail.selector" :placeholder="t('tools_page.dkim_selector_ph')" style="flex: 0 1 150px" @keyup.enter="runMail" />
@@ -439,29 +462,16 @@ async function runEui64() {
               <div v-if="mail.res.dkim"><strong>DKIM ({{ mail.res.dkim_selector }}):</strong> <code style="word-break:break-all">{{ (mail.res.dkim || []).join(' ') || '—' }}</code></div>
             </div>
           </n-card>
-
-          <!-- GeoIP -->
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><AddressesIcon /></n-icon>{{ t('tools_page.t_geoip') }}</span></template>
-            <div class="nu-row">
-              <n-input v-model:value="geo.ip" placeholder="8.8.8.8" @keyup.enter="runGeo" />
-              <n-button type="primary" class="nu-go" @click="runGeo"><template #icon><n-icon><SearchIcon /></n-icon></template>{{ t("tools_page.lookup") }}</n-button>
-            </div>
-            <div v-if="geo.res" style="margin-top:10px; font-size:12px; line-height:1.7">
-              <div v-if="geo.res.error"><n-tag type="warning">{{ geo.res.error === 'not_configured' ? t('tools_page.geoip_not_set') : geo.res.error }}</n-tag></div>
-              <template v-else>
-                <div><strong>{{ geo.res.country || '—' }}</strong> <span v-if="geo.res.country_iso">({{ geo.res.country_iso }})</span> {{ geo.res.city || '' }} {{ (geo.res.subdivisions||[]).join(' / ') }}</div>
-                <div v-if="geo.res.latitude != null">lat/lng: {{ geo.res.latitude }}, {{ geo.res.longitude }} <span v-if="geo.res.time_zone">· {{ geo.res.time_zone }}</span></div>
-                <div v-if="geo.res.asn">AS{{ geo.res.asn }} {{ geo.res.as_org || '' }}</div>
-                <div v-if="geo.res.network">{{ geo.res.network }}</div>
-              </template>
-            </div>
-          </n-card>
         </div>
+      </n-tab-pane>
 
-        <!-- 機房電力試算 -->
-        <h4 class="nu-section">{{ t('tools_page.power_calc') }}</h4>
+      <!-- ═══════════ 機房 / 電力 ═══════════ -->
+      <n-tab-pane name="power">
+        <template #tab>
+          <span class="tab-h"><n-icon :size="16"><PowerIcon /></n-icon>{{ t('tools_page.cat_power') }}</span>
+        </template>
         <div class="nu-grid">
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.pw_load') }}</span></template>
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><PowerIcon /></n-icon>{{ t('tools_page.pw_load') }}</span></template>
             <div class="nu-row">
               <n-input-number v-model:value="pw.volts" :min="1" :show-button="false" style="width: 96px"><template #suffix>V</template></n-input-number>
               <n-input-number v-model:value="pw.amps" :min="0" :show-button="false" style="width: 96px"><template #suffix>A</template></n-input-number>
@@ -470,20 +480,20 @@ async function runEui64() {
             </div>
             <div style="margin-top:10px"><strong>{{ pwLoadW.toLocaleString() }} W</strong> · {{ (pwLoadW/1000).toFixed(2) }} kW</div>
           </n-card>
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.pw_heat') }}</span></template>
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><PowerIcon /></n-icon>{{ t('tools_page.pw_heat') }}</span></template>
             <div class="nu-row">
               <n-input-number v-model:value="pw.watts" :min="0" :step="100" :show-button="false" style="width: 140px"><template #suffix>W</template></n-input-number>
             </div>
             <div style="margin-top:10px"><strong>{{ pwBtu.toLocaleString() }} BTU/hr</strong></div>
           </n-card>
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.pw_ups') }}</span></template>
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><PowerIcon /></n-icon>{{ t('tools_page.pw_ups') }}</span></template>
             <div class="nu-row">
               <n-input-number v-model:value="pw.battWh" :min="0" :step="100" :show-button="false" style="width: 120px"><template #suffix>Wh</template></n-input-number>
               <n-input-number v-model:value="pw.loadW" :min="1" :step="50" :show-button="false" style="width: 120px"><template #suffix>W</template></n-input-number>
             </div>
             <div style="margin-top:10px"><strong>≈ {{ pwUpsMin }} {{ t('tools_page.pw_minutes') }}</strong></div>
           </n-card>
-          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><GridIcon /></n-icon>{{ t('tools_page.pw_pdu') }}</span></template>
+          <n-card size="small"><template #header><span class="nu-h"><n-icon :size="16"><PowerIcon /></n-icon>{{ t('tools_page.pw_pdu') }}</span></template>
             <div class="nu-row">
               <n-input-number v-model:value="pw.pduA" :min="1" :show-button="false" style="width: 140px"><template #suffix>A</template></n-input-number>
             </div>
@@ -496,13 +506,20 @@ async function runEui64() {
 </template>
 
 <style scoped>
-/* 網路小工具：最多兩欄，不要擠到三欄；窄螢幕自動單欄 */
+/* 工具分類分頁標籤：icon + 文字 */
+.tab-h { display: inline-flex; align-items: center; gap: 6px; }
+/* 卡片標題列右側副標：說明這些工具 AI 也能用 */
+.tools-subtitle { font-size: 12px; opacity: 0.7; }
+
+/* 每個分類底下的工具：最多兩欄，不要擠到三欄；窄螢幕自動單欄 */
 .nu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: start;
 }
+/* 輸出較豐富的工具（IP/CIDR 資訊、切割、聚合、OUF、郵件診斷）佔滿整列 */
+.nu-grid > .nu-wide { grid-column: 1 / -1; }
 @media (max-width: 820px) {
   .nu-grid { grid-template-columns: 1fr; }
 }
@@ -524,5 +541,4 @@ async function runEui64() {
 .nu-grid :deep(.n-card > .n-card-header) {
   border-bottom: 1px solid rgba(127, 127, 127, 0.18);
 }
-.nu-section { margin: 18px 0 8px; font-size: 14px; opacity: 0.85; }
 </style>

@@ -199,7 +199,6 @@
     "result": "結果",
     "coords": "經緯度",
     "rack_count": "機櫃數",
-    "device_count": "裝置數",
     "pinned": "釘選",
     "admin": "管理者",
     "mode": "模式",
@@ -895,7 +894,13 @@
     "f_last_host": "最後一個可用",
     "f_modified_eui64": "修改版 EUI-64",
     "f_link_local": "鏈路本地位址",
-    "f_interface_id": "介面 ID"
+    "f_interface_id": "介面 ID",
+    "cat_ip": "IP 位址",
+    "cat_cidr": "子網路 / CIDR",
+    "cat_mac": "MAC / 廠商",
+    "cat_dns": "DNS / 網域",
+    "cat_power": "機房 / 電力",
+    "subtitle": "IP / 子網路 / MAC / DNS / 電力的計算與查詢工具，全部也可在 AI 助理中使用"
   },
   "dns_admin": {
     "title": "DNS 服務",
