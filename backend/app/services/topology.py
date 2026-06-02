@@ -34,7 +34,7 @@ from app.models.subnet import Subnet
 async def build_topology(
     session: AsyncSession,
     *,
-    user=None,  # type: ignore[no-untyped-def]  RBAC：限縮成該 user 可見的 device/subnet
+    user=None,  # RBAC：限縮成該 user 可見的 device/subnet
     location_id: uuid.UUID | None = None,
     subnet_ids: list[uuid.UUID] | None = None,
     include_wireless: bool = True,
