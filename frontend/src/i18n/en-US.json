@@ -63,7 +63,8 @@
     "vpn_tunnels": "Site-to-Site VPN",
     "migration": "phpIPAM Migration",
     "import": "RIPE / TWNIC Import",
-    "system_settings": "System Settings"
+    "system_settings": "System Settings",
+    "version": "Version Info"
   },
   "topbar": {
     "search": "Search…",
@@ -1470,6 +1471,18 @@
   "relations": {
     "title": "Relationships",
     "wrap_hint": "continues on next row"
+  },
+  "version": {
+    "title": "Version Info",
+    "current": "Current version",
+    "check_latest": "Check latest on GitHub",
+    "update_available": "Update available: v{v}",
+    "up_to_date": "Up to date",
+    "releases": "Go to Releases",
+    "check_failed": "Could not reach GitHub to check",
+    "packages_hint": "Key packages actually installed on the backend.",
+    "package": "Package",
+    "installed": "Version"
   },
   "system_settings": {
     "title": "System Settings (global)",

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.dependencies import CurrentUser, require_admin
 from app.core.audit import append_audit
 from app.core.db import get_session
-from app.core.safe_http import safe_request
+from app.core.safe_http import UnsafeOutboundURL, safe_request
 from app.schemas.base import StrictModel
 from app.services.hostname import (
     HOSTNAME_SOURCES,
@@ -654,3 +654,74 @@ async def list_roles(
         "id": str(g.id), "name": g.name, "is_builtin": g.is_builtin,
         "member_count": int(counts.get(g.id, 0)),
     } for g in rows], "object_types": list(_OBJ_TYPES), "levels": ["read", "write", "admin"]}
+
+
+# ─────────────────── 版本資訊 ───────────────────
+
+_GITHUB_REPO = "jasoncheng7115/jt-ipam"
+
+
+@router.get("/version")
+async def get_version_info() -> dict[str, Any]:
+    """現行版本 + Python 與主要套件版本（管理頁顯示用）。"""
+    import sys
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _pkgver
+
+    from app.version import __version__
+
+    pkgs = [
+        "fastapi", "starlette", "sqlalchemy", "pydantic", "asyncpg", "alembic",
+        "uvicorn", "httpx", "redis", "argon2-cffi", "cryptography", "defusedxml",
+        "authlib", "mcp",
+    ]
+    versions: dict[str, str | None] = {}
+    for p in pkgs:
+        try:
+            versions[p] = _pkgver(p)
+        except PackageNotFoundError:
+            versions[p] = None
+    return {
+        "current": __version__,
+        "python": sys.version.split()[0],
+        "packages": versions,
+    }
+
+
+@router.get("/version/check-latest")
+async def check_latest_version() -> dict[str, Any]:
+    """查 GitHub 最新 release（無 release 則退回 tags），與現行版本比較。"""
+    from app.version import __version__
+
+    headers = {"Accept": "application/vnd.github+json"}
+    latest: str | None = None
+    error: str | None = None
+    try:
+        resp = await safe_request(
+            "GET", f"https://api.github.com/repos/{_GITHUB_REPO}/releases/latest",
+            timeout=10.0, headers=headers,
+        )
+        if resp.status_code == 200:
+            latest = (resp.json().get("tag_name") or "").lstrip("v") or None
+        elif resp.status_code == 404:
+            # 尚無 release → 退回 tags
+            tags_resp = await safe_request(
+                "GET", f"https://api.github.com/repos/{_GITHUB_REPO}/tags",
+                timeout=10.0, headers=headers,
+            )
+            if tags_resp.status_code == 200:
+                tags = tags_resp.json()
+                if isinstance(tags, list) and tags:
+                    latest = (tags[0].get("name") or "").lstrip("v") or None
+        else:
+            error = f"github http {resp.status_code}"
+    except (UnsafeOutboundURL, httpx.HTTPError) as exc:
+        error = f"transport: {exc.__class__.__name__}"
+
+    return {
+        "current": __version__,
+        "latest": latest,
+        "update_available": bool(latest and latest != __version__),
+        "release_url": f"https://github.com/{_GITHUB_REPO}/releases",
+        "error": error,
+    }

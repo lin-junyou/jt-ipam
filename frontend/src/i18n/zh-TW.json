@@ -63,7 +63,8 @@
     "vpn_tunnels": "站對站 VPN",
     "migration": "phpIPAM 匯入",
     "import": "RIPE/TWNIC",
-    "system_settings": "系統設定"
+    "system_settings": "系統設定",
+    "version": "版本資訊"
   },
   "topbar": {
     "search": "搜尋…",
@@ -1470,6 +1471,18 @@
   "relations": {
     "title": "關係圖（上下層物件）",
     "wrap_hint": "接續到下一排"
+  },
+  "version": {
+    "title": "版本資訊",
+    "current": "現行版本",
+    "check_latest": "檢查 GitHub 最新版",
+    "update_available": "有新版本：v{v}",
+    "up_to_date": "已是最新版",
+    "releases": "前往 Releases",
+    "check_failed": "無法連到 GitHub 檢查版本",
+    "packages_hint": "以下為後端實際安裝的主要套件版本。",
+    "package": "套件",
+    "installed": "版本"
   },
   "system_settings": {
     "title": "系統設定（全域）",

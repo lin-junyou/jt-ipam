@@ -189,6 +189,7 @@ const menuOptions = computed<MenuOption[]>(() => {
           { label: () => t("nav.plugins"),       key: "plugins",        icon: renderIcon(PluginsIcon) },
           { label: () => "LLM / AI",             key: "llm_settings",   icon: renderIcon(SettingsIcon) },
           { label: () => t("nav.system_settings"), key: "system_settings", icon: renderIcon(SettingsIcon) },
+          { label: () => t("nav.version"),       key: "version",        icon: renderIcon(AdminIcon) },
           { label: () => t("nav.chat_history"),  key: "chat_history",   icon: renderIcon(ChatHistoryIcon) },
         ],
       },

@@ -40,3 +40,27 @@ export async function listOllamaModels(): Promise<{ models: OllamaModel[]; error
   );
   return data;
 }
+
+export interface VersionInfo {
+  current: string;
+  python: string;
+  packages: Record<string, string | null>;
+}
+
+export interface LatestVersion {
+  current: string;
+  latest: string | null;
+  update_available: boolean;
+  release_url: string;
+  error: string | null;
+}
+
+export async function getVersionInfo(): Promise<VersionInfo> {
+  const { data } = await apiClient.get<VersionInfo>("/api/v1/system/version");
+  return data;
+}
+
+export async function checkLatestVersion(): Promise<LatestVersion> {
+  const { data } = await apiClient.get<LatestVersion>("/api/v1/system/version/check-latest");
+  return data;
+}
