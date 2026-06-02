@@ -1483,6 +1483,7 @@
     "up_to_date": "已是最新版",
     "releases": "前往 Releases",
     "check_failed": "無法連到 GitHub 檢查版本",
+    "packages": "套件版本",
     "packages_hint": "以下為後端實際安裝的主要套件版本。",
     "package": "套件",
     "installed": "版本"

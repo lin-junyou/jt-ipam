@@ -224,6 +224,10 @@ onMounted(() => {
           </n-descriptions-item>
           <n-descriptions-item :label="t('devices.u_position')">{{ device.u_position ?? "—" }}</n-descriptions-item>
           <n-descriptions-item :label="t('devices.u_size')">{{ device.u_size ?? "—" }}</n-descriptions-item>
+          <n-descriptions-item :label="t('devices.rack_face')">
+            {{ (device as any).rack_face === "rear" ? t("devices.rack_face_rear")
+               : (device as any).rack_face === "front" ? t("devices.rack_face_front") : "—" }}
+          </n-descriptions-item>
           <n-descriptions-item :label="t('nav.customers')" :span="3">
             <a v-if="device.customer_id" href="#" class="entity-link"
                @click.prevent="router.push({ name: 'customers' })">

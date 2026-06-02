@@ -1483,6 +1483,7 @@
     "up_to_date": "Up to date",
     "releases": "Go to Releases",
     "check_failed": "Could not reach GitHub to check",
+    "packages": "Packages",
     "packages_hint": "Key packages actually installed on the backend.",
     "package": "Package",
     "installed": "Version"
