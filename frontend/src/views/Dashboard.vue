@@ -379,9 +379,10 @@ onMounted(() => { void load(); void loadPins(); });
   display: flex; align-items: center; gap: 8px;
 }
 .loc-row:hover { background: rgba(127, 127, 127, 0.08); }
-.loc-name { font-weight: 500; flex: 0 0 auto; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-name { font-weight: 500; flex: 0 0 132px; max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .loc-counts {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 2px;
+  flex: 0 0 auto; min-width: 72px; justify-content: flex-end;
+  display: inline-flex; align-items: center; gap: 2px;
   font-size: 12px; opacity: 0.7; font-variant-numeric: tabular-nums;
 }
 .loc-bar {

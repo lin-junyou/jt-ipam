@@ -176,6 +176,7 @@ const menuOptions = computed<MenuOption[]>(() => {
           { label: () => t("nav.groups"),        key: "groups",         icon: renderIcon(GroupsIcon) },
           { label: () => t("nav.permissions"),   key: "permissions",    icon: renderIcon(AdminIcon) },
           { label: () => t("nav.custom_fields"), key: "custom_fields",  icon: renderIcon(CustomFieldsIcon) },
+          { label: () => t("nav.oui_admin"),     key: "oui_admin",      icon: renderIcon(DevicesIcon) },
           { label: () => t("nav.hostname_precedence"), key: "hostname_precedence", icon: renderIcon(AddressesIcon) },
           { label: () => t("nav.anomaly"),       key: "anomaly",        icon: renderIcon(AnomalyIcon) },
           { label: () => t("nav.dns"),           key: "dns",            icon: renderIcon(DnsIcon) },

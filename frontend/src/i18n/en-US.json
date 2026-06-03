@@ -66,7 +66,8 @@
     "system_settings": "System Settings",
     "version": "Version Info",
     "firewall_admin": "OPNsense connections",
-    "virt_admin": "Proxmox connections"
+    "virt_admin": "Proxmox connections",
+    "oui_admin": "MAC Vendors (OUI)"
   },
   "topbar": {
     "search": "Search…",
@@ -921,7 +922,8 @@
     "cat_power": "Datacenter / Power",
     "subtitle": "Calculators & lookups for IP / subnet / MAC / DNS / power — all also available in the AI assistant",
     "oui_search_ph": "Search by prefix (22 / 00:11) or vendor name",
-    "oui_search_count": "{n} matches"
+    "oui_search_count": "{n} matches",
+    "oui_managed_in_admin": "(database maintained in admin)"
   },
   "dns_admin": {
     "title": "DNS Servers",
@@ -1534,5 +1536,9 @@
     "title": "System Settings (global)",
     "grp_display": "Display & map",
     "grp_liveness": "Liveness"
+  },
+  "oui_admin": {
+    "title": "MAC Vendor Database (OUI)",
+    "schedule_note": "Auto-refreshed monthly on the 1st (systemd timer). You can also refresh manually here."
   }
 }

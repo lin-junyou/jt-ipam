@@ -14,10 +14,12 @@ export interface DNSServer {
   id: string;
   name: string;
   type: string;
-  endpoint: string;
+  api_url: string | null;
+  server_address: string | null;
+  extra_config?: string | null;  // JSON：username / verify_tls 等
   enabled: boolean;
-  is_authoritative: boolean;
-  managed_zones?: string[];
+  sync_interval_seconds: number;
+  last_sync_at?: string | null;
   last_error?: string | null;
   created_at: string;
   updated_at: string;

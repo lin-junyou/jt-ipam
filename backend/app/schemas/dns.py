@@ -48,6 +48,7 @@ class DNSServerRead(StrictModel):
     type: str
     api_url: str | None
     server_address: str | None
+    extra_config: str | None  # JSON：username / verify_tls 等非機密設定（回填編輯用）
     enabled: bool
     sync_interval_seconds: int
     last_sync_at: datetime | None

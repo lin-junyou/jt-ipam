@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useAuthStore } from "@/stores/auth";
-import { storeToRefs } from "pinia";
 
 const { t } = useI18n();
 
@@ -41,11 +39,10 @@ import {
   useMessage,
 } from "naive-ui";
 import { apiClient } from "@/api/client";
-import { ToolsIcon, RefreshIcon, AddressesIcon, SubnetsIcon, GridIcon, DevicesIcon, ListIcon, SearchIcon, DnsIcon, PowerIcon } from "@/icons";
+import { ToolsIcon, AddressesIcon, SubnetsIcon, GridIcon, DevicesIcon, ListIcon, SearchIcon, DnsIcon, PowerIcon } from "@/icons";
 import { fmtDateTime } from "@/utils/datetime";
 
 const msg = useMessage();
-const { me } = storeToRefs(useAuthStore());
 
 // ── IP Info ──
 const ipInput = ref("8.8.8.8");
@@ -88,7 +85,6 @@ async function runSplit() {
 
 // ── MAC OUI 製造商查詢 + 維護 ──
 const ouiStats = ref<{ count: number; last_updated: string | null } | null>(null);
-const ouiRefreshing = ref(false);
 const ouiLookupMac = ref("");
 const ouiLookupResult = ref<string | null>(null);
 const ouiLookupBusy = ref(false);
@@ -98,19 +94,6 @@ async function loadOuiStats() {
     const { data } = await apiClient.get("/api/v1/oui/stats");
     ouiStats.value = data;
   } catch { /* silent */ }
-}
-
-async function refreshOuiDb() {
-  ouiRefreshing.value = true;
-  try {
-    const { data } = await apiClient.post("/api/v1/oui/refresh");
-    msg.success(t("tools_page.oui_refresh_ok", { inserted: data.inserted, updated: data.updated, parsed: data.parsed }));
-    await loadOuiStats();
-  } catch (e: any) {
-    msg.error(e?.response?.data?.detail ?? t("tools_page.oui_refresh_fail"));
-  } finally {
-    ouiRefreshing.value = false;
-  }
 }
 
 async function runOuiLookup() {
@@ -412,11 +395,7 @@ async function runEui64() {
                 <n-tag type="info">{{ ouiStats?.count?.toLocaleString() ?? "—" }}</n-tag>
                 <span style="margin-left: 16px">{{ t('tools_page.oui_last_updated') }}</span>
                 <n-tag>{{ fmtDateTime(ouiStats?.last_updated) }}</n-tag>
-                <n-button v-if="me?.is_admin" type="primary" size="small"
-                          :loading="ouiRefreshing" @click="refreshOuiDb" style="margin-left: 16px">
-                  <template #icon><n-icon><RefreshIcon /></n-icon></template>
-                  {{ t('tools_page.oui_refresh_now') }}
-                </n-button>
+                <span style="margin-left: 12px; font-size: 12px; opacity: .6">{{ t('tools_page.oui_managed_in_admin') }}</span>
               </n-space>
               <div>
                 <div class="nu-row">

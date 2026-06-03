@@ -21,15 +21,14 @@ const { t } = useI18n();
 
 const { visibleKeys: dnsVis, setVisible: dnsSet, reset: dnsReset } = useColumnPrefs(
   "dns_admin",
-  ["name", "type", "endpoint", "enabled", "is_authoritative", "actions"],
-  ["name", "type", "endpoint", "enabled", "is_authoritative", "actions"],
+  ["name", "type", "endpoint", "enabled", "actions"],
+  ["name", "type", "endpoint", "enabled", "actions"],
 );
 const dnsPicker = [
   { key: "name", label: t("cols.name") },
   { key: "type", label: t("cols.type") },
   { key: "endpoint", label: "Endpoint" },
   { key: "enabled", label: t("cols.status") },
-  { key: "is_authoritative", label: "Authoritative" },
   { key: "actions", label: t("cols.actions") },
 ];
 
@@ -102,9 +101,18 @@ function openEdit(r: DNSServer) {
   f.name = r.name;
   f.type = r.type as DNSServerType;
   f.enabled = r.enabled;
-  // endpoint 可能是 api_url 或 server_address，依類型回填到對應欄位（祕密欄留空＝不變）
-  if (["powerdns", "unbound_opnsense", "univention_ucs"].includes(r.type)) f.api_url = r.endpoint ?? "";
-  else f.server_address = r.endpoint ?? "";
+  f.sync_interval_seconds = r.sync_interval_seconds ?? 300;
+  // api_url / server_address 依類型回填（祕密欄留空＝不變）
+  f.api_url = r.api_url ?? "";
+  f.server_address = r.server_address ?? "";
+  // extra_config（JSON）回填 username / verify_tls，否則重開會跑回預設值
+  if (r.extra_config) {
+    try {
+      const extra = JSON.parse(r.extra_config) as { username?: string; verify_tls?: boolean };
+      if (typeof extra.username === "string") f.username = extra.username;
+      if (typeof extra.verify_tls === "boolean") f.verify_tls = extra.verify_tls;
+    } catch { /* ignore malformed */ }
+  }
   form.value = f;
   show.value = true;
 }
@@ -160,13 +168,13 @@ const allCols = computed<DataTableColumns<DNSServer>>(() => autoSort([
     title: t("dns_admin.type"), key: "type", width: 110,
     render: (r) => h(NTag, { size: "small", type: "info" }, () => r.type),
   },
-  { title: t("dns_admin.endpoint"), key: "endpoint", minWidth: 200, ellipsis: { tooltip: true } },
+  { title: t("dns_admin.endpoint"), key: "endpoint", minWidth: 200, ellipsis: { tooltip: true },
+    render: (r) => r.api_url ?? r.server_address ?? "—" },
   {
     title: t("common.status"), key: "enabled", width: 110,
     render: (r) => h(NTag, { type: r.enabled ? "success" : "default", size: "small" },
       () => r.enabled ? t("common.enabled") : t("common.disabled")),
   },
-  { title: "auth", key: "is_authoritative", width: 90, render: (r) => r.is_authoritative ? "✓" : "—" },
   {
     title: t("common.actions"), key: "actions", className: "col-actions", width: 124,
     render: (r) => h(NSpace, { size: 2, wrapItem: false, wrap: false }, () => [

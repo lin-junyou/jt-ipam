@@ -44,6 +44,7 @@ const routes: RouteRecordRaw[] = [
       { path: "wazuh", name: "wazuh", component: () => import("@/views/WazuhAdmin.vue"), meta: { admin: true } },
       { path: "plugins", name: "plugins", component: () => import("@/views/PluginsAdmin.vue"), meta: { admin: true } },
       // Phase 3
+      { path: "oui", name: "oui_admin", component: () => import("@/views/OUIAdmin.vue"), meta: { admin: true } },
       { path: "custom-fields", name: "custom_fields", component: () => import("@/views/CustomFields.vue"), meta: { admin: true } },
       { path: "customers", name: "customers", component: () => import("@/views/Customers.vue"), meta: { admin: true } },
       { path: "customers/:id", name: "customer-detail", component: () => import("@/views/CustomerDetail.vue"), meta: { admin: true } },
