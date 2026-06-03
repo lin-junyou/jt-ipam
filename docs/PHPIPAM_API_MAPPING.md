@@ -1,11 +1,11 @@
 # phpIPAM v1.7 API 相容層對照表
 
-> 目標：phpIPAM 老腳本零改動可遷移；路徑前綴 `/api/phpipam/<app_id>/`
+> 目標：phpIPAM 老腳本零改動可遷移；路徑首碼 `/api/phpipam/<app_id>/`
 >
 > Phase 1 完成「Sections / Subnets / Addresses / VLANs / VRFs / Devices / Tools / User」這 8 大類。其餘類別（Folder/Locations/L2Domains/Circuits/Tags）Phase 2 補齊。
 >
 > 安全考量：
-> - 認證 token 採 phpIPAM 機制（`POST /user/`）；token 在 jt-ipam 內存為 `api_tokens` 並加密 hash（A02 / A07）
+> - 認證 token 採 phpIPAM 機制（`POST /user/`）；token 在 jt-ipam 內部存為 `api_tokens` 並加密 hash（A02 / A07）
 > - 所有 endpoint 套 RBAC 檢查；Section/Subnet 權限與現代 API 共用（A01）
 > - 輸出格式包裝為 phpIPAM 風格 `{success, data, message, time}`，但內部仍走 Pydantic 驗證（A03）
 

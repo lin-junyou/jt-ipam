@@ -607,7 +607,7 @@ async def oui_search(
     session: AsyncSession, *, user: User,
     prefix: str | None = None, name: str | None = None, limit: int = 50,
 ) -> dict[str, Any]:
-    """依 OUI 前綴或廠商名搜尋 OUI 登錄（多筆）。"""
+    """依 OUI 首碼或廠商名搜尋 OUI 紀錄（多筆）。"""
     from app.services.oui import search_oui_vendors
     try:
         return await search_oui_vendors(session, prefix=prefix, name=name, limit=limit)
@@ -797,7 +797,7 @@ async def list_subnet_ips(
     subnet_id: str | None = None, subnet_cidr: str | None = None,
     state: str | None = None, limit: int = 256,
 ) -> dict[str, Any]:
-    """列出某子網路內所有「已登錄／已用」的 IP（可選 state 過濾）。
+    """列出某子網路內所有「已紀錄／已用」的 IP（可選 state 過濾）。
 
     回每筆 IP 的 hostname / state / mac / owner / 是否掛裝置。提供 subnet_id 或 subnet_cidr。
     """

@@ -6,7 +6,7 @@ AI chat 實際呼叫路徑就是： await TOOLS[name]["fn"](session, user=user, 
   - 唯一允許的例外是 IPAMToolError（查無資料 / admin 守門 / 輸入不合法的人讀錯誤）
 任何其他例外（簽章不符、KeyError、AttributeError…）= 該工具對 AI 不可用 → 測試失敗。
 
-另外針對使用者實際踩到的情境（OUI 前綴搜尋）與純運算工具做精確值斷言。
+另外針對使用者實際踩到的情境（OUI 首碼搜尋）與純運算工具做精確值斷言。
 """
 
 from __future__ import annotations

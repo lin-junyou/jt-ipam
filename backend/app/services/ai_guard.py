@@ -32,7 +32,7 @@ _INJECTION_PATTERNS = [
 
 # 單一字元連續重複的上限（防灌爆 / 拖垮推論）
 _MAX_CHAR_RUN = 200
-# 允許的控制字元（換行 / tab / 回車）
+# 允許的控制字元（換行 / tab / Enter）
 _ALLOWED_CTRL = {"\n", "\t", "\r"}
 
 

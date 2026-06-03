@@ -197,7 +197,7 @@ async def search_oui_vendors(
     name: str | None = None,
     limit: int = 50,
 ) -> dict[str, Any]:
-    """依 OUI 前綴（如 '22' / '00:11' / '0011') 或廠商名子字串搜尋 OUI 登錄。
+    """依 OUI 首碼（如 '22' / '00:11' / '0011') 或廠商名子字串搜尋 OUI 紀錄。
 
     至少要給 prefix 或 name 其一。回傳 {count, truncated, vendors:[{prefix, name, short_name}]}。
     """

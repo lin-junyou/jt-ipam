@@ -48,7 +48,7 @@ async def search(
     name: Annotated[str, Query(max_length=128)] = "",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
 ) -> dict[str, Any]:
-    """依 OUI 前綴（如 22 / 00:11）或廠商名搜尋多筆 OUI 登錄。"""
+    """依 OUI 首碼（如 22 / 00:11）或廠商名搜尋多筆 OUI 紀錄。"""
     try:
         return await search_oui_vendors(
             session, prefix=prefix or None, name=name or None, limit=limit,

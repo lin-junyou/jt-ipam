@@ -20,7 +20,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.execute("ALTER TABLE permissions ALTER COLUMN object_id DROP NOT NULL")
-    # 不論既有 object_type CHECK 叫什麼名字（可能被 naming-convention 二次加前綴），全部砍掉
+    # 不論既有 object_type CHECK 叫什麼名字（可能被 naming-convention 二次加首碼），全部砍掉
     op.execute(
         "DO $$ DECLARE c text; BEGIN "
         "FOR c IN SELECT conname FROM pg_constraint "

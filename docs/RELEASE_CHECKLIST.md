@@ -71,7 +71,7 @@
 - [ ] backup 檔可讀（pg_restore --list 出列表）
 - [ ] 目前生產的 chain verify 還是 ok（沒帶著斷鏈升級）
 - [ ] 有 rollback 計畫（git tag 知道從哪退）
-- [ ] **公告維護視窗**（如果有用戶）
+- [ ] **公告維護視窗**（如果有使用者）
 
 ---
 

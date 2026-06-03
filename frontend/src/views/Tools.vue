@@ -112,7 +112,7 @@ async function runOuiLookup() {
   }
 }
 
-// ── OUI 前綴 / 廠商名搜尋（多筆）──
+// ── OUI 首碼 / 廠商名搜尋（多筆）──
 const ouiSearchTerm = ref("");
 const ouiSearchBusy = ref(false);
 const ouiSearchRes = ref<{ count: number; truncated: boolean; vendors: { prefix: string; short_name: string | null; name: string }[] } | null>(null);
@@ -121,7 +121,7 @@ async function runOuiSearch() {
   if (!term) return;
   ouiSearchBusy.value = true;
   try {
-    // 看起來像 hex 前綴(只含 0-9a-f:-) → 當 prefix；否則當廠商名
+    // 看起來像 hex 首碼(只含 0-9a-f:-) → 當 prefix；否則當廠商名
     const isHex = /^[0-9a-fA-F:-]+$/.test(term);
     const { data } = await apiClient.get("/api/v1/oui/search", {
       params: isHex ? { prefix: term } : { name: term },
@@ -408,7 +408,7 @@ async function runEui64() {
                   <n-tag v-else type="warning">{{ t('tools_page.oui_not_found') }}</n-tag>
                 </div>
               </div>
-              <!-- 依前綴 / 廠商名搜尋多筆 -->
+              <!-- 依首碼 / 廠商名搜尋多筆 -->
               <div>
                 <div class="nu-row">
                   <n-input v-model:value="ouiSearchTerm" :placeholder="t('tools_page.oui_search_ph')" @keyup.enter="runOuiSearch" />

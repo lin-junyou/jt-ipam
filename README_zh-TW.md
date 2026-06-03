@@ -10,7 +10,7 @@
 
 ## 為什麼是 jt-ipam？
 
-phpIPAM 老用戶幾乎零學習成本；以現代技術全新打造（非基於 phpIPAM 程式碼）。深度整合：
+phpIPAM 老使用者幾乎零學習成本；以現代技術全新打造（非基於 phpIPAM 程式碼）。深度整合：
 
 - **DNS**：PowerDNS、BIND 9、OPNsense Unbound、Univention UCS、Microsoft Windows DNS（雙向同步）
 - **LibreNMS**：裝置同步、ARP / FDB 抓取、上線狀態互補、自動加入監控

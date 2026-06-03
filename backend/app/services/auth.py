@@ -142,7 +142,7 @@ async def authenticate(
             await session.commit()
             return user
 
-    # 本機帳號 + 外部 provider 已登錄
+    # 本機帳號 + 外部 provider 已登入
     if user is not None and provider == "local":
         # 抗 timing：一律執行密碼比對
         dummy_hash = ("$argon2id$v=19$m=65536,t=3,p=4$00000000000000000000000000000000$"

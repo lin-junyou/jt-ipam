@@ -29,7 +29,7 @@
 ## 一、產品定位
 
 ### 1.1 核心定位
-- **完整覆蓋 phpIPAM 全部功能**，phpIPAM 老用戶零學習成本
+- **完整覆蓋 phpIPAM 全部功能**，phpIPAM 老使用者零學習成本
 - **採用現代技術堆疊**，解決 phpIPAM 效能、UI、API 的歷史包袱
 - **補強 phpIPAM 缺少的進階功能**（取自 NetBox 設計，但維持簡潔）
 - **深度整合多家 DNS Server**：OPNsense Unbound、Windows DNS、BIND 9、PowerDNS
@@ -39,7 +39,7 @@
 - **符合台灣資安稽核需求**：繁中介面、民國紀年、SHA-256 異動稽核
 
 ### 1.2 設計哲學
-1. **phpIPAM 用戶體驗優先**
+1. **phpIPAM 使用者體驗優先**
 2. **進階功能可關閉**（NetBox 級模組預設關閉）
 3. **API 一等公民**（phpIPAM API 完整相容，舊腳本零改動）
 4. **不綁專屬技術**（開源元件、AGPL 授權）
@@ -609,13 +609,13 @@ Switch + Port
 ### 10.1 phpIPAM API 相容層（重要）
 - **完整對應 phpIPAM v1.7 API endpoint**
 - 舊腳本零改動可遷移
-- 路徑前綴 `/api/phpipam/`
+- 路徑首碼 `/api/phpipam/`
 - 同樣的 token 機制
 
 ### 10.2 現代 REST API
 - OpenAPI 3.1 自動文件（Swagger UI + Redoc）
 - 完整 CRUD、過濾、排序、分頁、欄位選擇、Bulk
-- 路徑前綴 `/api/v1/`
+- 路徑首碼 `/api/v1/`
 - API Token 限流
 
 ### 10.3 GraphQL API
