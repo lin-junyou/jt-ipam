@@ -424,7 +424,34 @@ async def trace_port(
         visited.add(current.id)
         term = await _term_for_port(current.id)
         if term is None:
+            # 無纜線，但有穿透對應（橋接/跳接面板）→ 沿內部連結續走並繪出
+            if current.peer_port_id and current.peer_port_id not in visited:
+                peer = await session.get(DevicePort, current.peer_port_id)
+                if peer is not None:
+                    peer_node = await _port_node(peer)
+                    hops.append({
+                        "cable_id": None, "cable_label": None,
+                        "cable_type": "internal", "cable_color": None,
+                        "internal": True, "to": peer_node,
+                    })
+                    nodes.append(peer_node)
+                    current = peer
+                    continue
             break
+        # bridge 雖把纜線掛在自己身上，實體上行其實是對應 NIC（peer）：
+        # 先插入「bridge →(橋接) NIC」內部跳，再走纜線到外部裝置
+        if (current.type == "bridge" and current.peer_port_id
+                and current.peer_port_id not in visited):
+            nic = await session.get(DevicePort, current.peer_port_id)
+            if nic is not None and nic.device_id == current.device_id:
+                visited.add(nic.id)
+                nic_node = await _port_node(nic)
+                hops.append({
+                    "cable_id": None, "cable_label": None,
+                    "cable_type": "internal", "cable_color": None,
+                    "internal": True, "to": nic_node,
+                })
+                nodes.append(nic_node)
         cable = await session.get(Cable, term.cable_id)
         other = (await session.execute(
             select(CableTermination).where(

@@ -288,6 +288,8 @@ async def _sync_node_ports(
         select(DevicePort).where(DevicePort.device_id == dev_id)
     )).scalars().all()}
     created = 0
+    # name → 此 bridge/bond 的成員介面名（供建立 peer 穿透對應）
+    link_members: dict[str, list[str]] = {}
     for itf in host_ifaces:
         name = (itf.get("iface") or "").strip()
         itype = (itf.get("type") or "").lower()
@@ -296,7 +298,10 @@ async def _sync_node_ports(
         if not any(k in itype for k in _NODE_IFACE_TYPES):
             continue   # loopback / alias / unknown 不建
         ptype = _pve_port_type(itype)
-        desc = _pve_port_desc(itf)
+        members = _pve_members(itf)
+        desc = _pve_port_desc(ptype, members)
+        if members:
+            link_members[name] = members
         cur = existing.get(name)
         if cur is not None:
             # 回填 / 更新 bridge·bond 的類型與對應關係（這些是基礎設施，非手動建立）
@@ -312,6 +317,20 @@ async def _sync_node_ports(
         session.add(port)
         existing[name] = port   # 同次若再遇同名（理論上不會）走更新分支
         created += 1
+
+    # 單一上行的 bridge/bond → 設 peer_port_id 穿透對應，讓纜線追蹤可沿內部續走
+    await session.flush()   # 確保新建埠取得 id 供 FK 參照
+    for pname, members in link_members.items():
+        if len(members) != 1:
+            continue   # 多成員（bond 多 slave）無法以單一 peer 表達，留說明文字
+        src = existing.get(pname)
+        tgt = existing.get(members[0])
+        if src is None or tgt is None or src.id == tgt.id:
+            continue
+        if src.peer_port_id is None:
+            src.peer_port_id = tgt.id
+        if tgt.peer_port_id is None:
+            tgt.peer_port_id = src.id
     return created
 
 
@@ -327,19 +346,25 @@ def _pve_port_type(itype: str) -> str:
     return "network"
 
 
-def _pve_port_desc(itf: dict[str, Any]) -> str | None:
-    """bridge → 對應的 bridge_ports（bond/NIC）；bond → 其 slaves（成員 NIC）。"""
+def _pve_members(itf: dict[str, Any]) -> list[str]:
+    """bridge → bridge_ports（bond/NIC）；bond → slaves（成員 NIC）。"""
     t = (itf.get("type") or "").lower()
     if "bridge" in t:
-        bp = (itf.get("bridge_ports") or "").strip()
-        members = [m for m in bp.split() if m and m.lower() != "none"]
-        if members:
-            return "橋接 → " + ", ".join(members)
-    elif "bond" in t:
-        sl = (itf.get("slaves") or itf.get("bond_slaves") or "").strip()
-        members = [m for m in sl.split() if m]
-        if members:
-            return "聚合 → " + ", ".join(members)
+        raw = (itf.get("bridge_ports") or "").strip()
+        return [m for m in raw.split() if m and m.lower() != "none"]
+    if "bond" in t:
+        raw = (itf.get("slaves") or itf.get("bond_slaves") or "").strip()
+        return [m for m in raw.split() if m]
+    return []
+
+
+def _pve_port_desc(ptype: str, members: list[str]) -> str | None:
+    if not members:
+        return None
+    if ptype == "bridge":
+        return "橋接 → " + ", ".join(members)
+    if ptype == "bond":
+        return "聚合 → " + ", ".join(members)
     return None
 
 

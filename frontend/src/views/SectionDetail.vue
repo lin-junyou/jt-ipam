@@ -133,7 +133,7 @@ onMounted(() => {
         <template #header>
           <n-space align="center" :wrap-item="false">
             <n-icon :size="20"><SubnetsIcon /></n-icon>
-            <span>{{ t("nav.subnets") }}({{ subnets.length }})</span>
+            <span>{{ t("nav.subnets") }} ({{ subnets.length }})</span>
           </n-space>
         </template>
         <template #header-extra>

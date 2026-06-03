@@ -280,7 +280,7 @@ onMounted(() => {
 
       <DevicePortsPanel v-if="device" :device-id="device.id" :device-name="device.name" :admin="isAdmin" />
 
-      <n-card v-if="device" :title="() => cardHead(AddressesIcon, `${t('addresses.ip_list_title')}(${addresses.length})`)">
+      <n-card v-if="device" :title="() => cardHead(AddressesIcon, `${t('addresses.ip_list_title')} (${addresses.length})`)">
         <template #header-extra>
           <n-space>
             <ColumnPicker size="small" :all="ipColumnPickerItems" :visible="ipVisibleKeys"
@@ -351,7 +351,7 @@ onMounted(() => {
         </n-descriptions>
       </n-card>
 
-      <n-card v-if="device && vlans.length" :title="() => cardHead(SubnetsIcon, `VLAN(${vlans.length})`)">
+      <n-card v-if="device && vlans.length" :title="() => cardHead(SubnetsIcon, `VLAN (${vlans.length})`)">
         <n-space :size="8" style="flex-wrap: wrap">
           <n-tag v-for="v in vlans" :key="v.vlan_id" type="info" :bordered="false" size="small">
             {{ v.number }} · {{ v.name }}

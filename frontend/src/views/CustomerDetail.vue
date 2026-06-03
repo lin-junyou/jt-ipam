@@ -139,7 +139,7 @@ onMounted(() => {
         <n-data-table :columns="deviceCols" :data="data.devices" :bordered="false" size="small" />
       </n-card>
 
-      <n-card v-if="data?.ip_addresses?.length" :title="`IP(${data.counts.ip_addresses})`">
+      <n-card v-if="data?.ip_addresses?.length" :title="`IP (${data.counts.ip_addresses})`">
         <n-data-table :columns="ipCols" :data="data.ip_addresses" :bordered="false" size="small"
                       :pagination="{ pageSize: 50 }" />
       </n-card>

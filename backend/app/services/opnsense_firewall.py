@@ -97,6 +97,47 @@ async def _api_get(fw: OPNsenseFirewall, path: str, *, timeout: float = 15.0) ->
     return resp.json()  # type: ignore[no-any-return]
 
 
+async def _iface_name_map(fw: OPNsenseFirewall) -> dict[str, str]:
+    """OPNsense 介面內部識別碼(identifier) → 顯示名稱(description)。
+
+    例：opt2→WAN2、wan→WAN、opt1→wgopnsitea。資料取自 interfaces/overview/export
+    （每筆含 identifier + description）；老版本/不可用時回空 dict（沿用原始 key）。
+    """
+    out: dict[str, str] = {}
+    try:
+        data = await _api_get(fw, "/api/interfaces/overview/export")
+    except OPNsenseError:
+        data = None
+    if isinstance(data, list):
+        for it in data:
+            if not isinstance(it, dict):
+                continue
+            ident = str(it.get("identifier") or "").strip()
+            descr = str(it.get("description") or "").strip()
+            if ident and descr and descr != "Unassigned Interface":
+                out[ident] = descr
+    # 補上 export 沒列出的群組介面（如 wireguard 群組）：getInterfaceNames {key: descr}
+    try:
+        names = await _api_get(fw, "/api/diagnostics/interface/getInterfaceNames")
+    except OPNsenseError:
+        names = None
+    if isinstance(names, dict):
+        for k, v in names.items():
+            if k not in out and isinstance(v, str) and v.strip():
+                out[str(k)] = v.strip()
+    return out
+
+
+def _resolve_iface(raw: str | None, ifmap: dict[str, str]) -> str | None:
+    """把規則的 interface 內部 key（可能逗號分隔多個）對應成顯示名稱。"""
+    if not raw:
+        return raw
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    if not parts:
+        return raw
+    return ", ".join(ifmap.get(p, p) for p in parts)
+
+
 async def _api_post(
     fw: OPNsenseFirewall, path: str, body: dict[str, Any] | None = None, *, timeout: float = 15.0,
 ) -> dict[str, Any]:
@@ -798,6 +839,7 @@ async def sync_filter_rules(
     now = dt.now(UTC)
     seen_uuids: set[str] = set()
     inserted = updated = 0
+    ifmap = await _iface_name_map(fw)   # opt2→WAN2、wgX→友善名
 
     for r in rows:
         ruuid = (r.get("uuid") or "").strip()
@@ -837,7 +879,7 @@ async def sync_filter_rules(
                 enabled=enabled,
                 sequence=_int_or_none(r.get("sequence")),
                 action=_v("action"),
-                interface=_v("interface"),
+                interface=_resolve_iface(_v("interface"), ifmap),
                 direction=_v("direction"),
                 protocol=_v("protocol") or _v("ipprotocol"),
                 source_net=_v("source_net") or _v("from") or _v("src"),
@@ -854,7 +896,7 @@ async def sync_filter_rules(
             existing.enabled = enabled
             existing.sequence = _int_or_none(r.get("sequence"))
             existing.action = _v("action")
-            existing.interface = _v("interface")
+            existing.interface = _resolve_iface(_v("interface"), ifmap)
             existing.direction = _v("direction")
             existing.protocol = _v("protocol") or _v("ipprotocol")
             existing.source_net = _v("source_net") or _v("from") or _v("src")

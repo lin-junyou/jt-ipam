@@ -1610,6 +1610,7 @@
     "type_bridge": "橋接",
     "type_bond": "聚合",
     "type_vlan": "VLAN",
-    "col_mac": "MAC"
+    "col_mac": "MAC",
+    "internal_link": "橋接/穿透"
   }
 }

@@ -438,7 +438,9 @@ async function remove() {
               </template>
               {{ t("common.confirm_delete") }}
             </n-popconfirm>
-            <n-button size="small" @click="close">{{ t("common.cancel") }}</n-button>
+            <n-button size="small" @click="close">
+              <template #icon><n-icon><CancelIcon /></n-icon></template>{{ t("common.cancel") }}
+            </n-button>
             <n-button type="primary" size="small" :loading="saving" @click="save">
               <template #icon><n-icon><SaveIcon /></n-icon></template>{{ t("common.save") }}
             </n-button>

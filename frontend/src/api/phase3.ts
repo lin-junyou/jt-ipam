@@ -371,7 +371,7 @@ export interface TraceNode {
 }
 export interface TraceHop {
   cable_id: string | null; cable_label: string | null; cable_type: string | null;
-  cable_color: string | null; to: TraceNode | null;
+  cable_color: string | null; to: TraceNode | null; internal?: boolean;
 }
 export interface PortTrace { start: TraceNode; nodes: TraceNode[]; hops: TraceHop[]; }
 

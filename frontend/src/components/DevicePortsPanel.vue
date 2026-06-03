@@ -156,8 +156,10 @@ function downloadSvg() {
     if (i > 0) {
       const hop = hops[i - 1];
       const ly = y - gap; const lh = gap;
-      svg += `<line x1="${cx}" y1="${ly}" x2="${cx}" y2="${ly + lh}" stroke="${hop?.cable_color || "#888"}" stroke-width="3"/>`;
-      const lbl = `${hop?.cable_type || "cable"}${hop?.cable_label ? " · " + hop.cable_label : ""}`;
+      const dash = hop?.internal ? ` stroke-dasharray="5 4"` : "";
+      const stroke = hop?.internal ? "#f0a020" : (hop?.cable_color || "#888");
+      svg += `<line x1="${cx}" y1="${ly}" x2="${cx}" y2="${ly + lh}" stroke="${stroke}" stroke-width="3"${dash}/>`;
+      const lbl = `${hop?.internal ? t("ports.internal_link") : (hop?.cable_type || "cable")}${hop?.cable_label ? " · " + hop.cable_label : ""}`;
       svg += `<text x="${cx + 8}" y="${ly + lh / 2 + 3}" font-size="11" fill="#555">${escapeXml(lbl)}</text>`;
     }
     const n = nodes[i];
@@ -285,8 +287,9 @@ onMounted(() => { void refresh(); });
       <div v-else class="trace-chain">
         <template v-for="(n, i) in trace.nodes" :key="i">
           <div v-if="i > 0" class="trace-cable">
-            <span class="trace-line" :style="{ background: trace.hops[i-1]?.cable_color || '#888' }"></span>
-            <span class="trace-cable-lbl">{{ trace.hops[i-1]?.cable_type || 'cable' }}<template v-if="trace.hops[i-1]?.cable_label"> · {{ trace.hops[i-1]?.cable_label }}</template></span>
+            <span class="trace-line" :class="{ 'trace-line-internal': trace.hops[i-1]?.internal }"
+                  :style="{ background: trace.hops[i-1]?.internal ? 'transparent' : (trace.hops[i-1]?.cable_color || '#888') }"></span>
+            <span class="trace-cable-lbl">{{ trace.hops[i-1]?.internal ? t('ports.internal_link') : (trace.hops[i-1]?.cable_type || 'cable') }}<template v-if="trace.hops[i-1]?.cable_label"> · {{ trace.hops[i-1]?.cable_label }}</template></span>
           </div>
           <div class="trace-node">
             <div class="trace-dev">{{ n.device_name || n.object_type || "—" }}</div>
@@ -308,5 +311,6 @@ onMounted(() => { void refresh(); });
 .trace-port { font-size: 12px; opacity: 0.7; font-family: monospace; }
 .trace-cable { display: flex; align-items: center; gap: 8px; height: 40px; }
 .trace-line { width: 3px; height: 100%; border-radius: 2px; }
+.trace-line-internal { background: transparent !important; border-left: 3px dashed #f0a020; width: 0; }
 .trace-cable-lbl { font-size: 12px; opacity: 0.65; }
 </style>

@@ -1610,6 +1610,7 @@
     "type_bridge": "Bridge",
     "type_bond": "Bond",
     "type_vlan": "VLAN",
-    "col_mac": "MAC"
+    "col_mac": "MAC",
+    "internal_link": "Internal"
   }
 }
