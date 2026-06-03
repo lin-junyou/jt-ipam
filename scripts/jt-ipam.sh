@@ -188,8 +188,9 @@ cmd_install() {
         /var/lib/jt-ipam/uploads /var/lib/jt-ipam/uploads/floorplans
     install -d -m 0755 "$ETC_DIR"
 
-    # 讓 jtipam 能寫 /opt/jt-ipam/backend/.venv 與 /opt/jt-ipam/frontend/{node_modules,dist}
-    chown -R "$JTIPAM_USER:$JTIPAM_GROUP" "$BACKEND_DIR" "$FRONTEND_DIR"
+    # 讓 jtipam 擁有整個專案目錄（含 .git）：venv / node_modules / dist 可寫，
+    # 且日後 upgrade 以 jtipam 身分跑 git pull 不會因 .git 為 root 所有而失敗（bootstrap 以 root clone 時尤其重要）。
+    chown -R "$JTIPAM_USER:$JTIPAM_GROUP" "$REPO_ROOT"
 
     # ── 3. PostgreSQL ──
     log "Configuring PostgreSQL…"
