@@ -20,9 +20,30 @@ const typeOpts = computed(() => PORT_TYPES.map((v) => ({ label: t("ports.type_" 
 
 async function refresh() {
   loading.value = true;
-  try { ports.value = await Physical.ports(props.deviceId); }
-  catch { msg.error(t("errors.network")); }
+  try {
+    const list = await Physical.ports(props.deviceId);
+    // 自然排序（eth1/0/2 在 eth1/0/10 前面，而非字元排序）
+    ports.value = list.sort((a, b) => natCompare(a.name, b.name));
+  } catch { msg.error(t("errors.network")); }
   finally { loading.value = false; }
+}
+// 把名稱拆成「文字 / 數字」段落逐段比較，數字段以數值大小比
+function natCompare(a: string, b: string): number {
+  const ax = a.match(/(\d+|\D+)/g) ?? [];
+  const bx = b.match(/(\d+|\D+)/g) ?? [];
+  const n = Math.max(ax.length, bx.length);
+  for (let i = 0; i < n; i++) {
+    const as = ax[i], bs = bx[i];
+    if (as === undefined) return -1;
+    if (bs === undefined) return 1;
+    const an = Number(as), bn = Number(bs);
+    if (!Number.isNaN(an) && !Number.isNaN(bn)) {
+      if (an !== bn) return an - bn;
+    } else if (as !== bs) {
+      return as < bs ? -1 : 1;
+    }
+  }
+  return 0;
 }
 const peerName = (id: string | null) => id ? (ports.value.find((p) => p.id === id)?.name ?? "—") : "—";
 
