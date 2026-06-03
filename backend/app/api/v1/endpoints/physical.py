@@ -237,19 +237,48 @@ async def import_device_ports(
     session: Annotated[AsyncSession, Depends(get_session)],
     device_id: uuid.UUID = Query(...),
 ) -> dict[str, Any]:
-    """從整合來源把連接埠撈進來。目前支援 LibreNMS（用 FDB 學到的 port_name）。"""
-    lns_ids = list((await session.execute(
-        select(LibreNMSDevice.id).where(LibreNMSDevice.jt_ipam_device_id == device_id)
+    """從整合來源把連接埠撈進來：優先 LibreNMS 介面清單(ifName，含 server/PVE 主機)，
+    退回 FDB 學到的 port_name（交換器）。"""
+    from app.models.librenms import LibreNMSInstance
+
+    lns_devs = list((await session.execute(
+        select(LibreNMSDevice).where(LibreNMSDevice.jt_ipam_device_id == device_id)
     )).scalars().all())
+
     names: set[str] = set()
-    if lns_ids:
+    sources: set[str] = set()
+
+    # 1) LibreNMS 介面清單（ifName）— 對 server / PVE 主機 / switch 都有效
+    for d in lns_devs:
+        inst = await session.get(LibreNMSInstance, d.instance_id)
+        if inst is None:
+            continue
+        try:
+            from app.services.librenms import _api_get
+            pdata = await _api_get(
+                inst, f"/api/v0/devices/{d.legacy_device_id}/ports?columns=ifName,ifType",
+                timeout=20.0,
+            )
+            for p in pdata.get("ports") or []:
+                nm = (p.get("ifName") or "").strip()
+                if nm and nm.lower() not in ("null", "unrouted vlan 1"):
+                    names.add(nm)
+                    sources.add("librenms")
+        except Exception:
+            pass
+
+    # 2) 退回 FDB（交換器學到的 port）
+    if not names and lns_devs:
         rows = (await session.execute(
             select(FDBEntry.port_name).where(
-                FDBEntry.device_id.in_(lns_ids),
+                FDBEntry.device_id.in_([d.id for d in lns_devs]),
                 FDBEntry.port_name.is_not(None),
             ).distinct()
         )).all()
-        names = {r[0].strip() for r in rows if r[0] and r[0].strip()}
+        for r in rows:
+            if r[0] and r[0].strip():
+                names.add(r[0].strip())
+                sources.add("librenms-fdb")
 
     existing = {p.name for p in (await session.execute(
         select(DevicePort).where(DevicePort.device_id == device_id)
@@ -265,10 +294,10 @@ async def import_device_ports(
     if created:
         await _audit(session, user=user, request=request, object_type="device_port",
                      object_id=str(device_id), action="import",
-                     diff={"imported": created, "source": "librenms-fdb"})
+                     diff={"imported": created, "sources": sorted(sources)})
         await session.commit()
     return {"imported": created, "found": len(names),
-            "linked_librenms": len(lns_ids), "source": "librenms-fdb"}
+            "linked_librenms": len(lns_devs), "sources": sorted(sources)}
 
 
 @router.patch("/device-ports/{port_id}", response_model=DevicePortRead,

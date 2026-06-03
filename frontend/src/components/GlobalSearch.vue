@@ -227,10 +227,10 @@ function detectedTagType(d: string): "info" | "success" | "warning" | "default" 
 <style scoped>
 /* 桌機固定寬度；窄螢幕(手機)改成可縮、最寬不超過容器，避免撐破頂列 */
 .gs-badge {
-  width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+  width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
-  color: #fff; background: linear-gradient(135deg, #18a058, #36ad6a);
-  box-shadow: 0 1px 3px rgba(24, 160, 88, 0.4);
+  color: #18a058; background: rgba(24, 160, 88, 0.1);
+  pointer-events: none;   /* 純裝飾，不可點，避免被誤認為按鈕 */
 }
 .global-search { width: 380px; flex-shrink: 0; }
 .global-search__input { width: 320px; }
