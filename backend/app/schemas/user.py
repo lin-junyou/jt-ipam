@@ -22,5 +22,7 @@ class UserMe(StrictModel):
     auth_provider: str
     is_active: bool
     is_admin: bool
+    # 非管理員是否對任何物件類型有可見範圍；前端用來隱藏零權限看不到的選單
+    has_visibility: bool = True
     last_login_at: datetime | None
     created_at: datetime

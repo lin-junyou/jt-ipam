@@ -13,6 +13,7 @@ export interface UserMe {
   auth_provider: string;
   is_active: boolean;
   is_admin: boolean;
+  has_visibility?: boolean;
   last_login_at: string | null;
   created_at: string;
 }

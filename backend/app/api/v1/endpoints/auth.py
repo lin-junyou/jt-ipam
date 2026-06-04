@@ -254,8 +254,24 @@ async def logout(_user: CurrentUser) -> None:
 
 
 @router.get("/me", response_model=UserMe)
-async def me(user: CurrentUser) -> UserMe:
-    return UserMe.model_validate(user)
+async def me(
+    user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> UserMe:
+    out = UserMe.model_validate(user)
+    # 計算非管理員的可見性：任一物件類型有可見範圍即 True；零權限 → False
+    if user.is_admin:
+        out.has_visibility = True
+    else:
+        from app.services.permission import visible_ids
+        has = False
+        for ot in ("subnet", "device", "customer", "section", "rack", "location"):
+            v = await visible_ids(session, user=user, object_type=ot)
+            if v is None or v:
+                has = True
+                break
+        out.has_visibility = has
+    return out
 
 
 # ─────────────────── LDAP admin test ───────────────────
