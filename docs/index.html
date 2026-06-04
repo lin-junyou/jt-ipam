@@ -471,7 +471,7 @@
       <div class="screen-txt">
         <span class="num">09</span>
         <h3><span class="zh">AI 也懂你的機房</span><span class="en">AI that knows your infra</span></h3>
-        <p><span class="zh">AI 真的看得懂你的基礎設施：問「R1 機櫃還剩幾 U」「這段子網路幫我找三個連續 IP」「192.168.1.87 被誰占用」，它會直接讀實際資料回答，省去自己翻表對照。全部跑在本地 Ollama，實測搭配 gemma4:26b 效果很好，回應快又準。</span><span class="en">The assistant genuinely understands your infrastructure: ask “how many U are left in rack R1”, “find three consecutive free IPs here” or “who's using 192.168.1.87”, and it answers from real data instead of making you dig through tables. It all runs on local Ollama — gemma4:26b works great in our testing, fast and accurate.</span></p>
+        <p><span class="zh">AI 真的看得懂你的基礎設施：問「R1 機櫃還剩幾 U」「這段子網路幫我找三個連續 IP」「192.168.1.87 被誰占用」，它會直接讀實際資料回答，省去自己翻表對照。全部跑在本地 Ollama，實測搭配 gemma4:26b 效果良好，回應快又準。</span><span class="en">The assistant genuinely understands your infrastructure: ask “how many U are left in rack R1”, “find three consecutive free IPs here” or “who's using 192.168.1.87”, and it answers from real data instead of making you dig through tables. It all runs on local Ollama — gemma4:26b works well in our testing, fast and accurate.</span></p>
       </div>
     </div>
 
@@ -505,7 +505,7 @@
       <div class="card"><h3><span class="badge">A</span><span class="zh">身分驗證</span><span class="en">Authentication</span></h3><p><span class="zh">argon2id 雜湊密碼、TOTP 兩階段、JWT(access 15 分 / refresh 14 天)、帳號鎖定。</span><span class="en">argon2id hashing, TOTP MFA, JWT (15-min access / 14-day refresh), account lockout.</span></p></div>
       <div class="card"><h3><span class="badge">B</span>R B A C</h3><p><span class="zh">幾個內建預設角色，加上物件層級授權 (單位 / 區段 / 子網路 / 裝置…) 與階層繼承。</span><span class="en">A few built-in preset roles plus object-level grants (tenant / section / subnet / device…) with hierarchy inheritance.</span></p></div>
       <div class="card"><h3><span class="badge">C</span><span class="zh">稽核串鏈</span><span class="en">Audit chain</span></h3><p><span class="zh">所有變更逐筆雜湊串接，可驗證是否被竄改；明細含變更前後對照。</span><span class="en">Every change is hash-chained and verifiable against tampering; diffs show before/after.</span></p></div>
-      <div class="card"><h3><span class="badge">D</span><span class="zh">資安防護</span><span class="en">Security by design</span></h3><p><span class="zh">對齊 OWASP Top 10:2025，每個模組與 PR 都過心智檢查；嚴格 CSP、安全標頭、伺服器端授權。</span><span class="en">Aligned with OWASP Top 10:2025 — every module and PR passes the checklist; strict CSP, security headers, server-side authz.</span></p></div>
+      <div class="card"><h3><span class="badge">D</span><span class="zh">資安遵循</span><span class="en">Security by design</span></h3><p><span class="zh">對齊 OWASP Top 10:2025，每個模組與 PR 都過心智檢查；嚴格 CSP、安全標頭、伺服器端授權。</span><span class="en">Aligned with OWASP Top 10:2025 — every module and PR passes the checklist; strict CSP, security headers, server-side authz.</span></p></div>
       <div class="card"><h3><span class="badge">E</span><span class="zh">完全自架</span><span class="en">Fully self-hosted</span></h3><p><span class="zh">不用 Docker、不依賴雲端；systemd + apt 直接跑在虛擬機與容器。</span><span class="en">No Docker, no cloud; runs on VMs and containers via systemd + apt.</span></p></div>
       <div class="card"><h3><span class="badge">F</span><span class="zh">排程拉取</span><span class="en">Scheduled pull</span></h3><p><span class="zh">phpIPAM 走 SSH tunnel 匯入；OPNsense / LibreNMS / Wazuh 定時排程拉取，單向、不改動來源。</span><span class="en">phpIPAM import over SSH tunnel; OPNsense / LibreNMS / Wazuh pulled on a schedule — one-way, non-invasive.</span></p></div>
     </div>
@@ -516,7 +516,7 @@
   <div class="wrap">
     <div class="sec-head">
       <h2><span class="zh">本地 AI 加值</span><span class="en">Local AI value</span></h2>
-      <p><span class="zh">走自架 Ollama，資料不外流。問答、摘要、異常偵測都在自家機房完成。實測搭配 <code>gemma4:26b</code> 效果非常好。</span><span class="en">Powered by self-hosted Ollama — data never leaves your network. Q&A, summaries and anomaly detection, all on-prem. In our testing, <code>gemma4:26b</code> works exceptionally well.</span></p>
+      <p><span class="zh">走自架 Ollama，資料不外流。問答、摘要、異常偵測都在自家機房完成。實測搭配 <code>gemma4:26b</code> 效果良好。</span><span class="en">Powered by self-hosted Ollama — data never leaves your network. Q&A, summaries and anomaly detection, all on-prem. In our testing, <code>gemma4:26b</code> works well.</span></p>
     </div>
     <div class="grid g3">
       <div class="card"><h3><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/></svg></span><span class="zh">智慧助理</span><span class="en">Smart assistant</span></h3><p><span class="zh">用自然語言查 IP / 子網路 / 裝置，透過 jt-ipam 內建的 MCP 工具直接讀取你的 IPAM 資料。</span><span class="en">Ask about IPs / subnets / devices in natural language; jt-ipam's built-in MCP tools read your live IPAM data.</span></p></div>

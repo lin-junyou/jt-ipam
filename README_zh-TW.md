@@ -15,7 +15,7 @@ phpIPAM 老使用者幾乎零學習成本；以現代技術全新打造（非基
 - **DNS**：PowerDNS、BIND 9、OPNsense Unbound、Univention UCS、Microsoft Windows DNS（雙向同步）
 - **LibreNMS**：裝置同步、ARP / FDB 抓取、上線狀態互補、自動加入監控
 - **基礎設施**：Proxmox VE、Wazuh、OPNsense
-- **本地 AI**：Ollama 自然語言查詢 + 語意搜尋（資料不外送），並提供 MCP server（stdio / Streamable HTTP）；實測搭配 `gemma4:26b` 效果非常好
+- **本地 AI**：Ollama 自然語言查詢 + 語意搜尋（資料不外送），並提供 MCP server（stdio / Streamable HTTP）；實測搭配 `gemma4:26b` 效果良好
 
 完整規格見 [`docs/SPEC.md`](docs/SPEC.md)。
 
