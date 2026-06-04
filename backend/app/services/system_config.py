@@ -135,3 +135,48 @@ async def set_ai_chat_retention_days(
     flag_modified(row, "value")
     await session.commit()
     return days
+
+
+# ─────────────────── Graylog DSV 查表（lookup table adapter）───────────────────
+
+GRAYLOG_DSV_KEY = "graylog_dsv"
+
+
+async def get_graylog_dsv(session: AsyncSession) -> dict[str, Any]:
+    """Graylog DSV 查表設定：enabled / token / fmt(csv|tsv) / path(URL slug)。"""
+    row = await session.get(SystemSetting, GRAYLOG_DSV_KEY)
+    v = dict(row.value) if (row and isinstance(row.value, dict)) else {}
+    return {
+        "enabled": bool(v.get("enabled", False)),
+        "token": str(v.get("token") or ""),
+        "fmt": v.get("fmt") if v.get("fmt") in ("csv", "tsv") else "csv",
+        "path": str(v.get("path") or "ip-fqdn"),
+    }
+
+
+async def set_graylog_dsv(
+    session: AsyncSession, *, enabled: bool, fmt: str, path: str,
+    regenerate_token: bool = False, updated_by_user_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    import re
+    import secrets
+
+    from sqlalchemy.orm.attributes import flag_modified
+
+    row = await session.get(SystemSetting, GRAYLOG_DSV_KEY)
+    if row is None:
+        row = SystemSetting(key=GRAYLOG_DSV_KEY, value={}, updated_by=updated_by_user_id)
+        session.add(row)
+    cur = dict(row.value or {})
+    cur["enabled"] = bool(enabled)
+    cur["fmt"] = fmt if fmt in ("csv", "tsv") else "csv"
+    # path 限英數 / 連字號 / 底線，避免亂跑路由
+    slug = re.sub(r"[^A-Za-z0-9_-]", "", path or "").strip("-") or "ip-fqdn"
+    cur["path"] = slug[:48]
+    if regenerate_token or not cur.get("token"):
+        cur["token"] = secrets.token_urlsafe(24)
+    row.value = cur
+    row.updated_by = updated_by_user_id
+    flag_modified(row, "value")
+    await session.commit()
+    return await get_graylog_dsv(session)

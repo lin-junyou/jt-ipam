@@ -1426,7 +1426,15 @@
       "rack_name_align_hint": "Horizontal alignment of device names in the rack diagram.",
       "align_left": "Left",
       "align_center": "Center",
-      "align_right": "Right"
+      "align_right": "Right",
+      "graylog_title": "Graylog DSV lookup",
+      "graylog_enable": "Enable the DSV lookup endpoint (for Graylog to poll)",
+      "graylog_path": "Path name",
+      "graylog_format": "Format",
+      "graylog_regen": "Regenerate token",
+      "graylog_url": "Lookup URL (for Graylog)",
+      "graylog_copy": "Copy",
+      "graylog_hint": "In Graylog, add a “DSV File from HTTP” data adapter and paste the URL above; pick separator , or Tab per format, key column = 1, value column = 2 (key = IP, value = hostname / FQDN). Regenerate the token any time to revoke access."
     }
   },
   "errors": {

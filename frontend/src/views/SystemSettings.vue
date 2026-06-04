@@ -9,6 +9,7 @@ import {
   NCard, NSpace, NIcon, NSelect, NInput, NInputNumber, NSwitch, NButton, NTag, useMessage,
 } from "naive-ui";
 import { AdminIcon } from "@/icons";
+import { getGraylogDsv, putGraylogDsv } from "@/api/system";
 import { fmtDateTime, fmtRelative } from "@/utils/datetime";
 import {
   getMapProvider, setMapProvider, getRackNameAlign, setRackNameAlign,
@@ -91,11 +92,32 @@ function fmtBytes(n: number | null): string {
   return n > 1e6 ? (n / 1e6).toFixed(1) + " MB" : (n / 1e3).toFixed(0) + " KB";
 }
 
+// Graylog DSV 查表
+const dsv = ref({ enabled: false, fmt: "csv", path: "ip-fqdn", token: "" });
+const dsvSaving = ref(false);
+const dsvFmtOpts = [{ label: "CSV (,)", value: "csv" }, { label: "TSV (Tab)", value: "tsv" }];
+const dsvUrl = computed(() =>
+  dsv.value.token ? `${location.origin}/api/v1/lookup/${dsv.value.path}?token=${dsv.value.token}` : "");
+async function loadDsv() { try { dsv.value = await getGraylogDsv(); } catch { /* ignore */ } }
+async function saveDsv(regenerate = false) {
+  dsvSaving.value = true;
+  try {
+    dsv.value = await putGraylogDsv({
+      enabled: dsv.value.enabled, fmt: dsv.value.fmt, path: dsv.value.path, regenerate_token: regenerate,
+    });
+    msg.success(t("common.saved"));
+  } catch { msg.error(t("errors.network")); } finally { dsvSaving.value = false; }
+}
+function copyDsvUrl() {
+  if (dsvUrl.value) { void navigator.clipboard.writeText(dsvUrl.value); msg.success(t("common.ok")); }
+}
+
 onMounted(() => {
   getMapProvider().then((p) => { mapProvider.value = p; }).catch(() => {});
   getRackNameAlign().then((a) => { rackAlign.value = a; }).catch(() => {});
   getOnlineGrace().then((m) => { grace.value = m; }).catch(() => {});
   void loadGeoip();
+  void loadDsv();
 });
 </script>
 
@@ -182,6 +204,39 @@ onMounted(() => {
           {{ t("settings.system.geoip_hint") }}<br>
           {{ t("settings.system.geoip_freq_advice") }}
         </div>
+      </section>
+
+      <!-- Graylog DSV 查表 -->
+      <section class="ss-group">
+        <h3 class="ss-h">{{ t("settings.system.graylog_title") }}</h3>
+        <div class="ss-row">
+          <div style="display:flex; align-items:center; gap:8px">
+            <n-switch v-model:value="dsv.enabled" @update:value="() => saveDsv()" />
+            <span style="font-size:13px">{{ t("settings.system.graylog_enable") }}</span>
+          </div>
+        </div>
+        <div class="ss-grid" style="margin-top:12px">
+          <div class="fld">
+            <label>{{ t("settings.system.graylog_path") }}</label>
+            <n-input v-model:value="dsv.path" placeholder="ip-fqdn" />
+          </div>
+          <div class="fld">
+            <label>{{ t("settings.system.graylog_format") }}</label>
+            <n-select v-model:value="dsv.fmt" :options="dsvFmtOpts" />
+          </div>
+        </div>
+        <div class="ss-row" style="margin-top:12px">
+          <n-button size="small" :loading="dsvSaving" @click="() => saveDsv()">{{ t("common.save") }}</n-button>
+          <n-button size="small" @click="() => saveDsv(true)">{{ t("settings.system.graylog_regen") }}</n-button>
+        </div>
+        <div v-if="dsv.enabled && dsvUrl" class="fld" style="margin-top:14px">
+          <label>{{ t("settings.system.graylog_url") }}</label>
+          <n-space :size="6" align="center" :wrap="false">
+            <n-input :value="dsvUrl" readonly />
+            <n-button size="small" @click="copyDsvUrl">{{ t("settings.system.graylog_copy") }}</n-button>
+          </n-space>
+        </div>
+        <div class="hint" style="line-height:1.6; margin-top:10px">{{ t("settings.system.graylog_hint") }}</div>
       </section>
     </div>
   </n-card>

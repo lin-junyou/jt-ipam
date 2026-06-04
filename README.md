@@ -15,6 +15,7 @@ Familiar to phpIPAM users so they are productive from day one, but built from sc
 - **DNS** — PowerDNS, BIND 9, OPNsense Unbound, Univention UCS, Microsoft Windows DNS (two-way sync)
 - **LibreNMS** — device sync, ARP / FDB harvesting, online-status reconciliation, auto-onboarding to monitoring
 - **Infrastructure** — Proxmox VE, Wazuh, OPNsense (alias / rule / NAT sync)
+- **Graylog** — exposes an IP→hostname/FQDN DSV lookup endpoint for Graylog's "DSV File from HTTP" data adapter
 - **Local AI** — natural-language queries and semantic search over Ollama (data never leaves the host), plus an MCP server (stdio and Streamable HTTP transports) so external LLM clients can drive the IPAM; `gemma4:26b` works well in our testing
 
 Full spec in [`docs/SPEC.md`](docs/SPEC.md).

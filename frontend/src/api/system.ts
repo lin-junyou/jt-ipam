@@ -1,5 +1,17 @@
 import { apiClient } from "@/api/client";
 
+export interface GraylogDsv { enabled: boolean; fmt: string; path: string; token: string; }
+export async function getGraylogDsv(): Promise<GraylogDsv> {
+  const { data } = await apiClient.get<GraylogDsv>("/api/v1/system/graylog-dsv");
+  return data;
+}
+export async function putGraylogDsv(p: {
+  enabled: boolean; fmt: string; path: string; regenerate_token?: boolean;
+}): Promise<GraylogDsv> {
+  const { data } = await apiClient.put<GraylogDsv>("/api/v1/system/graylog-dsv", p);
+  return data;
+}
+
 export interface LLMConfig {
   enabled: boolean;
   url: string;
