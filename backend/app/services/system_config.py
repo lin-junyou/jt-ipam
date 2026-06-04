@@ -180,3 +180,117 @@ async def set_graylog_dsv(
     flag_modified(row, "value")
     await session.commit()
     return await get_graylog_dsv(session)
+
+
+# ─────────────────── LDAP / AD（管理區設定，DB 覆蓋 env）───────────────────
+import base64  # noqa: E402
+
+from app.core.security import decrypt_secret, encrypt_secret  # noqa: E402
+
+LDAP_KEY = "ldap"
+_LDAP_AAD = b"ldap:bind_password"
+
+
+@dataclass
+class LdapConfig:
+    enabled: bool
+    server: str | None
+    port: int
+    use_ssl: bool
+    use_starttls: bool
+    bind_dn: str | None
+    bind_password: str | None   # 明文（已解密）；僅在 process 內使用，不外傳
+    search_base: str | None
+    user_filter: str
+    attr_email: str
+    attr_display_name: str
+    attr_member_of: str
+    admin_groups: list[str]
+    timeout: float
+
+
+def _enc_pw(pw: str) -> str:
+    ct, nonce = encrypt_secret(pw, aad=_LDAP_AAD)
+    return "v1:" + base64.b64encode(nonce).decode() + ":" + base64.b64encode(ct).decode()
+
+
+def _dec_pw(blob: str) -> str | None:
+    try:
+        _ver, b_nonce, b_ct = blob.split(":", 2)
+        return decrypt_secret(
+            base64.b64decode(b_ct), base64.b64decode(b_nonce), aad=_LDAP_AAD
+        ).decode("utf-8")
+    except Exception:
+        return None
+
+
+async def get_ldap_config(session: AsyncSession) -> LdapConfig:
+    """合併 env 預設 + DB 覆蓋。DB 沒設就完全等同舊的 env 行為。"""
+    s = get_settings()
+    cfg = LdapConfig(
+        enabled=s.ldap_enabled,
+        server=s.ldap_server,
+        port=s.ldap_port,
+        use_ssl=s.ldap_use_ssl,
+        use_starttls=s.ldap_use_starttls,
+        bind_dn=s.ldap_bind_dn,
+        bind_password=s.ldap_bind_password.get_secret_value() if s.ldap_bind_password else None,
+        search_base=s.ldap_search_base,
+        user_filter=s.ldap_user_filter,
+        attr_email=s.ldap_attr_email,
+        attr_display_name=s.ldap_attr_display_name,
+        attr_member_of=s.ldap_attr_member_of,
+        admin_groups=list(s.ldap_admin_groups),
+        timeout=s.ldap_timeout,
+    )
+    row = await session.get(SystemSetting, LDAP_KEY)
+    if row and isinstance(row.value, dict):
+        v = row.value
+        for k in ("server", "bind_dn", "search_base", "user_filter",
+                  "attr_email", "attr_display_name", "attr_member_of"):
+            if isinstance(v.get(k), str) and v[k] != "":
+                setattr(cfg, k, v[k])
+        for k in ("enabled", "use_ssl", "use_starttls"):
+            if isinstance(v.get(k), bool):
+                setattr(cfg, k, v[k])
+        if isinstance(v.get("port"), int):
+            cfg.port = v["port"]
+        if isinstance(v.get("admin_groups"), list):
+            cfg.admin_groups = [str(x) for x in v["admin_groups"]]
+        if isinstance(v.get("bind_password_enc"), str) and v["bind_password_enc"]:
+            pw = _dec_pw(v["bind_password_enc"])
+            if pw is not None:
+                cfg.bind_password = pw
+    return cfg
+
+
+_LDAP_SCALARS = ("enabled", "server", "port", "use_ssl", "use_starttls", "bind_dn",
+                 "search_base", "user_filter", "attr_email", "attr_display_name",
+                 "attr_member_of", "admin_groups")
+
+
+async def set_ldap_config(
+    session: AsyncSession, *, data: dict[str, Any], updated_by_user_id: uuid.UUID
+) -> dict[str, Any]:
+    """寫入 DB。bind_password：給非空字串才更新；給空字串清除；不給則保留原值。"""
+    from sqlalchemy.orm.attributes import flag_modified
+
+    row = await session.get(SystemSetting, LDAP_KEY)
+    if row is None:
+        row = SystemSetting(key=LDAP_KEY, value={}, updated_by=updated_by_user_id)
+        session.add(row)
+    val: dict[str, Any] = dict(row.value or {})
+    for k in _LDAP_SCALARS:
+        if k in data:
+            val[k] = data[k]
+    if "bind_password" in data:
+        pw = data["bind_password"]
+        if pw:
+            val["bind_password_enc"] = _enc_pw(str(pw))
+        elif pw == "":
+            val.pop("bind_password_enc", None)
+    row.value = val
+    row.updated_by = updated_by_user_id
+    flag_modified(row, "value")
+    await session.commit()
+    return val

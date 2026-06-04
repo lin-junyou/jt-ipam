@@ -675,9 +675,27 @@ async def allocate_ip(
     customer: str | None = None, mac: str | None = None,
 ) -> dict[str, Any]:
     """配發 IP（ADMIN）。可指定 requested_ip（哪個 IP）或留空取第一個空位；
-    可一併設定 hostname / owner / customer（用名稱比對）/ mac / description。"""
+    可一併設定 hostname / owner / customer（用名稱比對）/ mac / description。
+
+    若給了 requested_ip 但沒給 subnet_id / subnet_cidr，會自動找出「包含此 IP 的子網路」
+    （取最精確的一個）來配發，使用者不必先知道子網路。"""
     if not user.is_admin:
         raise IPAMToolError("allocate_ip requires admin")
+    # 只給 requested_ip 時，自動推導包含它的子網路（最長前綴優先）
+    if not subnet_id and not subnet_cidr and requested_ip:
+        row = (await session.execute(
+            text(
+                "SELECT id::text AS id FROM subnets "
+                "WHERE cidr >>= CAST(:ip AS inet) "
+                "ORDER BY masklen(cidr) DESC LIMIT 1"
+            ),
+            {"ip": requested_ip.split("/")[0]},
+        )).first()
+        if row is None:
+            raise IPAMToolError(
+                f"no subnet contains {requested_ip} — 請先建立包含此 IP 的子網路"
+            )
+        subnet_id = row.id
     subnet = await _resolve_subnet(
         session, user=user, subnet_id=subnet_id, subnet_cidr=subnet_cidr,
     )
