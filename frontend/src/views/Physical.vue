@@ -213,7 +213,7 @@ async function savePower() {
   try {
     if (powerKind.value === "panel") await Physical.createPanel({ name: f.name.trim(), location_id: f.location_id });
     else if (powerKind.value === "feed") await Physical.createFeed({ panel_id: f.panel_id!, name: f.name.trim() });
-    else await Physical.createOutlet({ feed_id: f.feed_id, name: f.name.trim() });
+    else await Physical.createOutlet({ feed_id: f.feed_id, label: f.name.trim() });
     msg.success(t("common.ok")); showPower.value = false; await refresh();
   } catch (e: any) { msg.error(e?.response?.data?.detail ?? t("errors.network")); } finally { savingPower.value = false; }
 }
@@ -290,9 +290,9 @@ watch(mode, () => { void refresh(); });
         <n-form-item :label="t('physical.b_port')">
           <n-select v-model:value="cableForm.bPort" :options="portOpts(bPorts)" :disabled="!cableForm.bDevice" filterable clearable :placeholder="t('physical.pick_port')" />
         </n-form-item>
-        <n-space>
-          <n-form-item :label="t('cols.type')" style="flex:1">
-            <n-select v-model:value="cableForm.type" :options="cableTypeOpts" />
+        <n-space :wrap-item="false" style="width:100%">
+          <n-form-item :label="t('cols.type')" style="width:150px">
+            <n-select v-model:value="cableForm.type" :options="cableTypeOpts" style="width:100%" :consistent-menu-width="false" />
           </n-form-item>
           <n-form-item :label="t('physical.cable_label')" style="flex:1">
             <n-input v-model:value="cableForm.label" placeholder="(optional)" />

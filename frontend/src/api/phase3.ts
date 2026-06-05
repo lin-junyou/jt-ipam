@@ -410,7 +410,7 @@ export const Physical = {
     const { data } = await apiClient.post<PowerFeed>("/api/v1/power-feeds", p);
     return data;
   },
-  async createOutlet(p: { feed_id?: string | null; name: string; description?: string | null }): Promise<PowerOutlet> {
+  async createOutlet(p: { feed_id?: string | null; label: string; rack_id?: string | null; device_id?: string | null; description?: string | null }): Promise<PowerOutlet> {
     const { data } = await apiClient.post<PowerOutlet>("/api/v1/power-outlets", p);
     return data;
   },

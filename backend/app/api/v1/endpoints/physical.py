@@ -128,7 +128,7 @@ async def list_cables(
             if t.object_type == "device_port" and t.object_id in ports:
                 p = ports[t.object_id]
                 device_id = p.device_id
-                label = f"{dev_name.get(p.device_id, '?')} / {p.name}"
+                label = f"{dev_name.get(p.device_id, '?')}@{p.name}"
             elif t.object_type == "device":
                 device_id = t.object_id
                 label = dev_name.get(t.object_id, str(t.object_id)[:8])

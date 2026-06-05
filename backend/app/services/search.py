@@ -21,6 +21,7 @@ from sqlalchemy import String, cast, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.address import IPAddress
+from app.models.subnet import Subnet
 from app.models.user import User
 from app.models.vlan import VLAN
 from app.services.permission import filter_visible
@@ -84,7 +85,7 @@ async def _search_ip_exact(
     rows = list(
         (
             await session.execute(
-                select(IPAddress).where(IPAddress.ip == ip).limit(limit)
+                select(IPAddress).where(IPAddress.ip == ip, IPAddress.subnet_id.in_(select(Subnet.id).where(Subnet.archived_at.is_(None)))).limit(limit)
             )
         ).scalars().all()
     )
@@ -123,9 +124,10 @@ async def _search_subnet_cidr(
                 ELSE 0.7
             END AS score
         FROM subnets
-        WHERE cidr = CAST(:q AS cidr)
+        WHERE (cidr = CAST(:q AS cidr)
            OR cidr >> CAST(:q AS cidr)
-           OR cidr << CAST(:q AS cidr)
+           OR cidr << CAST(:q AS cidr))
+          AND archived_at IS NULL
         ORDER BY score DESC, masklen(cidr)
         LIMIT :limit
         """
@@ -160,7 +162,8 @@ async def _search_mac(
         (
             await session.execute(
                 select(IPAddress)
-                .where(cast(IPAddress.mac, String).ilike(f"%{cleaned}%"))
+                .where(cast(IPAddress.mac, String).ilike(f"%{cleaned}%"),
+                       IPAddress.subnet_id.in_(select(Subnet.id).where(Subnet.archived_at.is_(None))))
                 .limit(limit)
             )
         ).scalars().all()
