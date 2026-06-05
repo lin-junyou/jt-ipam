@@ -317,8 +317,9 @@ async def _search_text_trgm(
         SELECT id, cidr::text AS cidr, description,
                COALESCE(similarity(description, :q), 0) AS score
           FROM subnets
-         WHERE description ILIKE :qlike
-            OR similarity(description, :q) > 0.2
+         WHERE (description ILIKE :qlike
+            OR similarity(description, :q) > 0.2)
+           AND archived_at IS NULL
          ORDER BY score DESC
          LIMIT :limit
         """
@@ -351,9 +352,10 @@ async def _search_text_trgm(
                  COALESCE(similarity(a.description, :q), 0)
                ) AS score
           FROM ip_addresses a
-         WHERE a.hostname ILIKE :qlike
+         WHERE (a.hostname ILIKE :qlike
             OR a.description ILIKE :qlike
-            OR similarity(a.hostname, :q) > 0.2
+            OR similarity(a.hostname, :q) > 0.2)
+           AND a.subnet_id IN (SELECT id FROM subnets WHERE archived_at IS NULL)
          ORDER BY score DESC
          LIMIT :limit
         """

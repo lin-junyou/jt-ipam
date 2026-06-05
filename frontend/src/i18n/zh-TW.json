@@ -69,7 +69,8 @@
     "firewall_admin": "整合 OPNsense",
     "virt_admin": "整合 Proxmox VE",
     "oui_admin": "MAC 製造商 (OUI)",
-    "system_admin": "系統管理員"
+    "system_admin": "系統管理員",
+    "system_logs": "系統記錄"
   },
   "topbar": {
     "search": "搜尋…",
@@ -1700,5 +1701,11 @@
     "type_vlan": "VLAN",
     "col_mac": "MAC",
     "internal_link": "橋接/穿透"
+  },
+  "system_logs": {
+    "title": "系統記錄",
+    "lines": "行數",
+    "download": "下載",
+    "empty": "（無記錄）"
   }
 }

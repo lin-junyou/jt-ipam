@@ -69,7 +69,8 @@
     "firewall_admin": "OPNsense connections",
     "virt_admin": "Proxmox VE connections",
     "oui_admin": "MAC Vendors (OUI)",
-    "system_admin": "System administrator"
+    "system_admin": "System administrator",
+    "system_logs": "System logs"
   },
   "topbar": {
     "search": "Search…",
@@ -1700,5 +1701,11 @@
     "type_vlan": "VLAN",
     "col_mac": "MAC",
     "internal_link": "Internal"
+  },
+  "system_logs": {
+    "title": "System logs",
+    "lines": "lines",
+    "download": "Download",
+    "empty": "(no logs)"
   }
 }

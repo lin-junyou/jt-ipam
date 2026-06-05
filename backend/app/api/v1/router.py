@@ -38,6 +38,7 @@ from app.api.v1.endpoints import (
     sections,
     sso,
     subnets,
+    system_logs,
     tools,
     topology,
     users,
@@ -47,6 +48,9 @@ from app.api.v1.endpoints import (
     wazuh,
 )
 from app.api.v1.endpoints import (
+    audit_admin as audit_admin_ep,
+)
+from app.api.v1.endpoints import (
     background_tasks as bg_tasks_endpoint,
 )
 from app.api.v1.endpoints import (
@@ -54,9 +58,6 @@ from app.api.v1.endpoints import (
 )
 from app.api.v1.endpoints import (
     ldap_admin as ldap_admin_ep,
-)
-from app.api.v1.endpoints import (
-    audit_admin as audit_admin_ep,
 )
 from app.api.v1.endpoints import (
     system_settings as system_settings_ep,
@@ -70,6 +71,7 @@ api_v1_router.include_router(preferences.router)
 api_v1_router.include_router(dashboard.router)
 api_v1_router.include_router(sections.router)
 api_v1_router.include_router(subnets.router)
+api_v1_router.include_router(system_logs.router)
 api_v1_router.include_router(addresses.router)
 api_v1_router.include_router(vlans.router)
 api_v1_router.include_router(vrfs.router)
