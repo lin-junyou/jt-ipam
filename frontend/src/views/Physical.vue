@@ -120,7 +120,7 @@ const feedCols = computed<DataTableColumns<any>>(() => autoSort([
   { title: t("cols.panel"), key: "panel_id", render: (r: any) => panels.value.find((p) => p.id === r.panel_id)?.name ?? r.panel_id },
 ]));
 const outletCols = computed<DataTableColumns<any>>(() => autoSort([
-  { title: t("common.name"), key: "name" },
+  { title: t("common.name"), key: "label", render: (r: any) => r.label ?? r.name ?? "—" },
   { title: t("cols.feed"), key: "feed_id", render: (r: any) => feeds.value.find((f) => f.id === r.feed_id)?.name ?? "—" },
 ]));
 const vpnCols = computed<DataTableColumns<any>>(() => autoSort([

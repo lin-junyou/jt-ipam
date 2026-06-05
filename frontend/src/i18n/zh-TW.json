@@ -1165,7 +1165,7 @@
     "create_tenant_group": "新增 Tenant Group",
     "create_asn": "新增 ASN",
     "create_provider": "新增供應商",
-    "create_circuit": "新增 Circuit",
+    "create_circuit": "新增電路",
     "create_contact_group": "新增聯絡人群組",
     "create_contact": "新增聯絡人",
     "create_ssid": "新增 SSID",
@@ -1188,7 +1188,12 @@
     "commit_kbps": "保證頻寬 (kbps)",
     "monthly_fee": "月費 (分)",
     "install_date": "開通日",
-    "contract_end": "合約到期"
+    "contract_end": "合約到期",
+    "status_active": "使用中",
+    "status_planned": "規劃中",
+    "status_provisioning": "開通中",
+    "status_offline": "離線",
+    "status_decommissioned": "已除役"
   },
   "contacts": {
     "group": "群組"

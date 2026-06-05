@@ -299,6 +299,101 @@ async def set_ldap_config(
     return val
 
 
+# ─────────────────── SSO：OIDC（OpenID Connect）───────────────────
+OIDC_KEY = "oidc"
+_OIDC_AAD = b"oidc:client_secret"
+
+
+def _enc_oidc(s: str) -> str:
+    ct, nonce = encrypt_secret(s, aad=_OIDC_AAD)
+    return "v1:" + base64.b64encode(nonce).decode() + ":" + base64.b64encode(ct).decode()
+
+
+def _dec_oidc(blob: str) -> str | None:
+    try:
+        _ver, b_nonce, b_ct = blob.split(":", 2)
+        return decrypt_secret(base64.b64decode(b_ct), base64.b64decode(b_nonce),
+                              aad=_OIDC_AAD).decode("utf-8")
+    except Exception:
+        return None
+
+
+@dataclass
+class OidcConfig:
+    enabled: bool
+    issuer: str | None
+    client_id: str | None
+    client_secret: str | None   # 明文（已解密），僅 process 內用
+    redirect_uri: str | None
+    scope: str
+    groups_claim: str
+    username_claim: str
+    admin_groups: list[str]
+    default_group_id: str | None = None
+
+
+async def get_oidc_config(session: AsyncSession) -> OidcConfig:
+    s = get_settings()
+    cfg = OidcConfig(
+        enabled=s.oidc_enabled,
+        issuer=s.oidc_issuer,
+        client_id=s.oidc_client_id,
+        client_secret=s.oidc_client_secret.get_secret_value() if s.oidc_client_secret else None,
+        redirect_uri=s.oidc_redirect_uri,
+        scope=s.oidc_scope,
+        groups_claim=s.oidc_groups_claim,
+        username_claim=s.oidc_username_claim,
+        admin_groups=list(s.oidc_admin_groups),
+    )
+    row = await session.get(SystemSetting, OIDC_KEY)
+    if row and isinstance(row.value, dict):
+        v = row.value
+        for k in ("issuer", "client_id", "redirect_uri", "scope",
+                  "groups_claim", "username_claim"):
+            if isinstance(v.get(k), str) and v[k] != "":
+                setattr(cfg, k, v[k])
+        if isinstance(v.get("enabled"), bool):
+            cfg.enabled = v["enabled"]
+        if isinstance(v.get("admin_groups"), list):
+            cfg.admin_groups = [str(x) for x in v["admin_groups"]]
+        if isinstance(v.get("default_group_id"), str) and v["default_group_id"]:
+            cfg.default_group_id = v["default_group_id"]
+        if isinstance(v.get("client_secret_enc"), str) and v["client_secret_enc"]:
+            sec = _dec_oidc(v["client_secret_enc"])
+            if sec is not None:
+                cfg.client_secret = sec
+    return cfg
+
+
+_OIDC_SCALARS = ("enabled", "issuer", "client_id", "redirect_uri", "scope",
+                 "groups_claim", "username_claim", "admin_groups", "default_group_id")
+
+
+async def set_oidc_config(
+    session: AsyncSession, *, data: dict[str, Any], updated_by_user_id: uuid.UUID
+) -> dict[str, Any]:
+    from sqlalchemy.orm.attributes import flag_modified
+    row = await session.get(SystemSetting, OIDC_KEY)
+    if row is None:
+        row = SystemSetting(key=OIDC_KEY, value={}, updated_by=updated_by_user_id)
+        session.add(row)
+    val: dict[str, Any] = dict(row.value or {})
+    for k in _OIDC_SCALARS:
+        if k in data:
+            val[k] = data[k]
+    if "client_secret" in data:
+        sec = data["client_secret"]
+        if sec:
+            val["client_secret_enc"] = _enc_oidc(str(sec))
+        elif sec == "":
+            val.pop("client_secret_enc", None)
+    row.value = val
+    row.updated_by = updated_by_user_id
+    flag_modified(row, "value")
+    await session.commit()
+    return val
+
+
 # ─────────────────── 稽核轉送到 Graylog（syslog / CEF / GELF）───────────────────
 AUDIT_FWD_KEY = "audit_forward"
 

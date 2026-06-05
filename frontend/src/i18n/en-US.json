@@ -1165,7 +1165,7 @@
     "create_tenant_group": "New Tenant Group",
     "create_asn": "New ASN",
     "create_provider": "New Provider",
-    "create_circuit": "New Circuit",
+    "create_circuit": "Add circuit",
     "create_contact_group": "New Contact Group",
     "create_contact": "New Contact",
     "create_ssid": "New SSID",
@@ -1188,7 +1188,12 @@
     "commit_kbps": "Commit (kbps)",
     "monthly_fee": "Monthly fee (cents)",
     "install_date": "Install date",
-    "contract_end": "Contract end"
+    "contract_end": "Contract end",
+    "status_active": "Active",
+    "status_planned": "Planned",
+    "status_provisioning": "Provisioning",
+    "status_offline": "Offline",
+    "status_decommissioned": "Decommissioned"
   },
   "contacts": {
     "group": "Group"

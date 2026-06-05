@@ -29,16 +29,42 @@ const CATEGORIES = [
   { key: "unauthorized_ips", label: () => t("anomaly.unauthorized") },
 ] as const;
 
+// 欄位標題在地化（其餘技術欄名原樣）
+const COLLBL: Record<string, string> = {
+  mac: "MAC", ip: "IP", port: "埠", device_id: "裝置",
+  last_seen_at: "最後出現", locations: "出現位置", reason: "原因", subnet: "子網路", state: "狀態",
+};
+// 把單一值轉成易讀字串（時間截到分、UUID 取前 8 碼）
+function pretty(k: string, val: any): string {
+  if (val == null || val === "") return "";
+  if (k.includes("device_id") || k === "device_id") return String(val).slice(0, 8);
+  if (k.includes("last_seen") || k.includes("_at") || k.includes("time")) return String(val).replace("T", " ").slice(0, 16);
+  return String(val);
+}
+function objLine(o: Record<string, any>): string {
+  // 物件 → 「埠 X · 裝置 ab12 · 最後 …」這類精簡描述
+  return Object.entries(o)
+    .filter(([, v]) => v != null && v !== "")
+    .map(([k, v]) => `${typeof COLLBL[k] === "string" ? COLLBL[k] : k}：${pretty(k, v)}`)
+    .join("　·　");
+}
 // 依資料 keys 動態產生欄位，把偵測結果以表格呈現（取代難讀的原始 JSON）
 function colsFor(rows: Record<string, any>[]): DataTableColumns<any> {
   const keys: string[] = [];
   for (const r of rows) for (const k of Object.keys(r)) if (!keys.includes(k)) keys.push(k);
   return keys.map((k) => ({
-    title: k, key: k, ellipsis: { tooltip: true },
+    title: typeof COLLBL[k] === "string" ? (COLLBL[k] as string) : k,
+    key: k, minWidth: 140, ellipsis: { tooltip: true },
     render: (r: any) => {
       const v = r[k];
-      if (v == null) return "—";
-      return typeof v === "object" ? h("code", { style: "font-size:11px" }, JSON.stringify(v)) : String(v);
+      if (v == null || v === "") return "—";
+      if (Array.isArray(v)) {
+        return h("div", { style: "display:flex;flex-direction:column;gap:2px" },
+          v.map((it) => h("div", { style: "font-size:12.5px" },
+            it && typeof it === "object" ? objLine(it) : String(it))));
+      }
+      if (typeof v === "object") return objLine(v);
+      return pretty(k, v);
     },
   }));
 }
@@ -64,12 +90,12 @@ async function run() {
         <span>{{ t("anomaly.title") }}</span>
       </n-space>
     </template>
-    <n-space style="margin-bottom: 12px">
+    <n-space align="center" style="margin-bottom: 12px" :wrap-item="false">
       <n-button type="primary" :loading="loading" @click="run">
         <template #icon><n-icon><TestIcon /></n-icon></template>
         {{ t("anomaly.run_scan") }}
       </n-button>
-      <span v-if="lastRunAt" style="opacity: 0.7">
+      <span v-if="lastRunAt" style="opacity: 0.7; font-size: 13px">
         {{ t("anomaly.last_run") }}: {{ lastRunAt }}
       </span>
     </n-space>

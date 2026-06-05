@@ -393,7 +393,7 @@ onMounted(() => { void loadAll(); });
           </n-form-item>
           <n-form-item :label="t('common.status')">
             <n-select v-model:value="form.status"
-                      :options="['active','planned','provisioning','offline','decommissioned'].map(v => ({label: v, value: v}))" />
+                      :options="['active','planned','provisioning','offline','decommissioned'].map(v => ({label: t('circuits.status_'+v), value: v}))" />
           </n-form-item>
           <div class="circuit-row">
             <n-form-item :label="t('circuits.down_kbps')" :show-feedback="false">
