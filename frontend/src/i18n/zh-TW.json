@@ -1141,7 +1141,8 @@
     "mac_drifts": "MAC 漂移",
     "ghost_ips": "失聯 IP",
     "unauthorized": "未授權 IP",
-    "raw_report": "完整報告"
+    "raw_report": "完整報告",
+    "none_found": "未發現異常"
   },
   "webhooks": {
     "events_label": "events (* = 全部)",

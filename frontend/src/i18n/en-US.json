@@ -1141,7 +1141,8 @@
     "mac_drifts": "MAC drifts",
     "ghost_ips": "Ghost IPs",
     "unauthorized": "Unauthorized IPs",
-    "raw_report": "Raw report"
+    "raw_report": "Raw report",
+    "none_found": "No anomalies found"
   },
   "webhooks": {
     "events_label": "events (* = all)",
