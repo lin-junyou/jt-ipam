@@ -855,21 +855,30 @@ async def get_subnet_detail(
 async def list_subnet_ips(
     session: AsyncSession, *, user: User,
     subnet_id: str | None = None, subnet_cidr: str | None = None,
-    state: str | None = None, limit: int = 256,
+    state: str | None = None, limit: int = 256, offset: int = 0,
 ) -> dict[str, Any]:
     """列出某子網路內所有「已紀錄／已用」的 IP（選用 state 過濾）。
 
     回每筆 IP 的 hostname / state / mac / owner / 是否掛裝置。提供 subnet_id 或 subnet_cidr。
+    結果多時用 offset 分批：回傳含 has_more / next_offset，需要下一批就帶 next_offset 再呼叫。
     """
     sub = await _resolve_subnet(session, user=user, subnet_id=subnet_id, subnet_cidr=subnet_cidr)
-    stmt = select(IPAddress).where(IPAddress.subnet_id == sub.id)
+    lim = min(int(limit), 1000)
+    off = max(int(offset), 0)
+    base = select(IPAddress).where(IPAddress.subnet_id == sub.id)
     if state:
-        stmt = stmt.where(IPAddress.state == state)
-    stmt = stmt.order_by(IPAddress.ip).limit(min(int(limit), 1000))
-    rows = (await session.execute(stmt)).scalars().all()
+        base = base.where(IPAddress.state == state)
+    # 多取一筆判斷是否還有下一批
+    stmt = base.order_by(IPAddress.ip).offset(off).limit(lim + 1)
+    rows = list((await session.execute(stmt)).scalars().all())
+    has_more = len(rows) > lim
+    rows = rows[:lim]
     return {
         "subnet": str(sub.cidr),
         "count": len(rows),
+        "offset": off,
+        "has_more": has_more,
+        "next_offset": (off + lim) if has_more else None,
         "ips": [{
             "ip": r.ip, "hostname": r.hostname, "state": r.state,
             "mac": r.mac, "owner": r.owner,
@@ -1649,11 +1658,12 @@ TOOLS: dict[str, dict[str, Any]] = {
     },
     "list_subnet_ips": {
         "fn": list_subnet_ips,
-        "description": "List the registered/used IPs inside a subnet (ip, hostname, state, mac, owner, device). Provide subnet_id or subnet_cidr; optional state filter. Use this to enumerate which IPs are in use in a subnet.",
+        "description": "List the registered/used IPs inside a subnet (ip, hostname, state, mac, owner, device). Provide subnet_id or subnet_cidr; optional state filter. Returns has_more/next_offset — to fetch the next batch, call again with offset=next_offset.",
         "parameters": {"type": "object", "properties": {
             "subnet_id": {"type": "string"}, "subnet_cidr": {"type": "string"},
             "state": {"type": "string", "description": "optional filter e.g. active"},
-            "limit": {"type": "integer", "minimum": 1, "maximum": 1000}}},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 1000},
+            "offset": {"type": "integer", "minimum": 0, "description": "skip N rows; use next_offset from a previous call for the next batch"}}},
     },
     "list_firewalls": {
         "fn": list_firewalls,

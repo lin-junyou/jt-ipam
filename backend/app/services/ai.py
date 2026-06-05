@@ -415,6 +415,9 @@ def _build_chat_context(
                 "call find_free_ips with the right count/consecutive ONCE; report only "
                 "the IPs it returns, and if it returns fewer than requested, say so "
                 "instead of making up more. "
+                "Some list tools return has_more/next_offset; if a result is truncated "
+                "or the user asks for more, tell them there are more and, when they ask "
+                "for the next batch, call the SAME tool again with offset=next_offset. "
                 + _lang_instruction(locale)
                 + _page_context_line(page_context)
             ),
