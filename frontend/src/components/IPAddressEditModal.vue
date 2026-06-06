@@ -551,6 +551,9 @@ async function remove() {
                 <span style="display:inline-flex;align-items:center;gap:6px">
                   <os-icon :family="props.address.os_family" :size="16" />
                   <span>{{ osFamilyLabel(catalog.os_families, props.address.os_family, locale) }}</span>
+                  <span v-if="props.address?.os_source" style="opacity:0.6;font-size:0.85em">
+                    {{ "（" + t("os_precedence.source_label") + ": " + t("os_precedence.src_" + props.address.os_source) + "）" }}
+                  </span>
                 </span>
               </template>
               {{ props.address?.os_guess }}

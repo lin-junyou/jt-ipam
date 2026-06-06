@@ -18,6 +18,7 @@ from app.core.db import get_session
 from app.core.safe_http import UnsafeOutboundURL, safe_request
 from app.models.ip_hostname import HOSTNAME_SOURCES
 from app.schemas.base import StrictModel
+from app.services import os_precedence
 from app.services.hostname import (
     get_disabled,
     get_precedence,
@@ -77,6 +78,48 @@ async def put_hostname_precedence(
     )
     await session.commit()
     return HostnamePrecedenceOut(order=order, disabled=disabled, sources=list(HOSTNAME_SOURCES))
+
+
+class OsPrecedenceOut(StrictModel):
+    order: list[str]
+    sources: list[str]
+
+
+class OsPrecedencePatch(StrictModel):
+    order: list[str]
+
+
+@router.get("/os-precedence", response_model=OsPrecedenceOut)
+async def get_os_precedence(
+    _user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> OsPrecedenceOut:
+    """全域 OS 來源優先序（scanner / librenms / wazuh）。"""
+    return OsPrecedenceOut(
+        order=await os_precedence.get_order(session),
+        sources=list(os_precedence.OS_SOURCES),
+    )
+
+
+@router.put("/os-precedence", response_model=OsPrecedenceOut)
+async def put_os_precedence(
+    payload: OsPrecedencePatch,
+    user: CurrentUser,
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> OsPrecedenceOut:
+    order = await os_precedence.set_order(session, order=payload.order, updated_by_user_id=user.id)
+    await append_audit(
+        session,
+        actor_user_id=str(user.id),
+        actor_ip=request.client.host if request.client else None,
+        actor_user_agent=request.headers.get("user-agent"),
+        object_type="system", object_id=None, action="update",
+        diff={"target": "os_precedence", "order": order},
+        request_id=getattr(request.state, "request_id", None),
+    )
+    await session.commit()
+    return OsPrecedenceOut(order=order, sources=list(os_precedence.OS_SOURCES))
 
 
 class ArpPrecedenceOut(StrictModel):

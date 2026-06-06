@@ -15,13 +15,17 @@ import {
   NInput,
   NInputNumber,
   NTooltip,
-  NSwitch,
+  NRadioGroup,
+  NRadioButton,
+  NButtonGroup,
+  NDropdown,
   useMessage,
   type DataTableColumns,
   type DataTableRowKey,
 } from "naive-ui";
 import { NIcon } from "naive-ui";
-import { RacksIcon, DeleteIcon, PlusIcon, EditIcon, SaveIcon, CancelIcon, LocationsIcon, PinIcon } from "@/icons";
+import { RacksIcon, DeleteIcon, PlusIcon, EditIcon, SaveIcon, CancelIcon, LocationsIcon, PinIcon, ExportIcon } from "@/icons";
+import { exportTable, type ExportColumn } from "@/utils/tableExport";
 import { usePinned } from "@/composables/usePinned";
 import { useRouter } from "vue-router";
 import { apiClient } from "@/api/client";
@@ -73,6 +77,15 @@ const isAdmin = computed(() => !!auth.me?.is_admin);
 const MERGED_VIEW_KEY = "jt_rack_merged";
 const mergedView = ref<boolean>(localStorage.getItem(MERGED_VIEW_KEY) === "1");
 watch(mergedView, (v) => localStorage.setItem(MERGED_VIEW_KEY, v ? "1" : "0"));
+// 分段切換：獨立卡片 / 合併卡片 → 對應 mergedView 布林（合併 = true）
+const rackViewMode = computed<"separate" | "merged">({
+  get: () => (mergedView.value ? "merged" : "separate"),
+  set: (v) => { mergedView.value = v === "merged"; },
+});
+// 合併卡共用的正/背面切換（控制卡內所有機櫃）
+const mergedFace = ref<"front" | "rear">("front");
+const mergedHasRear = computed(() =>
+  roomDiagrams.value.some((d: any) => (d.devices || []).some((x: any) => x.rack_face === "rear")));
 const roomFocus = ref<RD | null>(null);   // 在平面圖上點選的機櫃 → 顯示其 U 位
 async function onRoomRackSelect(rackId: string) {
   try { roomFocus.value = await getRackDiagram(rackId); }
@@ -386,6 +399,39 @@ async function confirmPickDevice() {
   } catch (e: any) { msg.error(e?.response?.data?.detail ?? t("errors.server")); }
   finally { pickBusy.value = false; }
 }
+
+// 合併卡匯出：跨機房所有機櫃的合併裝置清單（純資料格式，與 RackDiagram 標籤一致）
+const mergedExportOptions = [
+  { label: "CSV", key: "csv" },
+  { label: "Excel (.xlsx)", key: "xlsx" },
+  { label: "OpenDocument (.ods)", key: "ods" },
+  { label: "Markdown (.md)", key: "md" },
+  { label: "純文字 (.txt)", key: "txt" },
+];
+function onMergedExport(key: string) {
+  if (!["csv", "xlsx", "ods", "md", "txt"].includes(key)) return;
+  const fmt = key as "csv" | "xlsx" | "ods" | "md" | "txt";
+  const cols: ExportColumn[] = [
+    { key: "rack", label: t("nav.racks") },
+    { key: "name", label: t("cols.name") },
+    { key: "type", label: t("cols.type") },
+    { key: "u_position", label: "U" },
+    { key: "u_size", label: "U Size" },
+    { key: "rack_face", label: t("racks.face") },
+    { key: "primary_ip", label: "IP" },
+  ];
+  const rows = roomDiagrams.value.flatMap((d: any) =>
+    (d.devices || []).map((dev: any) => ({
+      rack: d.name,
+      name: dev.name,
+      type: dev.type,
+      u_position: dev.u_position,
+      u_size: dev.u_size,
+      rack_face: dev.rack_face ?? "front",
+      primary_ip: dev.primary_ip ?? "",
+    })));
+  exportTable(fmt, "room-racks", cols, rows, "Racks");
+}
 </script>
 
 <template>
@@ -424,8 +470,11 @@ async function confirmPickDevice() {
           {{ t("racks.manage_rooms") }}
         </n-button>
         <n-space v-if="roomId" align="center" :size="6" :wrap-item="false" style="margin-left:8px">
-          <n-switch v-model:value="mergedView" size="small" />
-          <span style="font-size:13px; opacity:.75">{{ t("racks.merged_view") }}</span>
+          <span style="font-size:13px; opacity:.75">{{ t("racks.view_mode") }}</span>
+          <n-radio-group v-model:value="rackViewMode" size="small">
+            <n-radio-button value="separate">{{ t("racks.view_separate") }}</n-radio-button>
+            <n-radio-button value="merged">{{ t("racks.view_merged") }}</n-radio-button>
+          </n-radio-group>
         </n-space>
       </n-space>
     </n-card>
@@ -451,13 +500,32 @@ async function confirmPickDevice() {
         <template v-if="roomDiagrams.length">
           <!-- 合併單卡：所有機櫃排進同一張卡（去各櫃外框，加小標題） -->
           <n-card v-if="mergedView" :title="t('racks.merged_title')">
+            <template #header-extra>
+              <div style="display:flex; align-items:center; gap:8px">
+                <n-button-group size="tiny">
+                  <n-button :type="mergedFace === 'front' ? 'primary' : 'default'" @click="mergedFace = 'front'">
+                    {{ t("racks.face_front") }}
+                  </n-button>
+                  <n-button :type="mergedFace === 'rear' ? 'primary' : 'default'" @click="mergedFace = 'rear'">
+                    {{ t("racks.face_rear") }}<span v-if="mergedHasRear" style="margin-left:3px">•</span>
+                  </n-button>
+                </n-button-group>
+                <n-dropdown trigger="click" :options="mergedExportOptions" @select="onMergedExport">
+                  <n-button size="tiny">
+                    <template #icon><n-icon><ExportIcon /></n-icon></template>
+                    {{ t("common.export") }}
+                  </n-button>
+                </n-dropdown>
+              </div>
+            </template>
             <div class="rack-row">
               <div v-for="d in roomDiagrams" :key="d.rack_id" class="merged-rack">
                 <div class="merged-rack__name">
                   {{ d.name }}<span class="merged-rack__u">{{ d.u_height }}U</span>
                 </div>
                 <rack-diagram :diagram="d" :show-legend="false" :editable="isAdmin"
-                              :floor-align-to="maxRoomU" bare @pick-empty="onPickEmpty" />
+                              :floor-align-to="maxRoomU" :face="mergedFace" :controls="false"
+                              bare @pick-empty="onPickEmpty" />
               </div>
             </div>
             <div class="rack-legend-shared">
@@ -634,7 +702,8 @@ async function confirmPickDevice() {
   gap: 16px;
   align-items: stretch;   /* 卡片等高，搭配 U 格 margin-top:auto → 機櫃靠下對齊（落地） */
   overflow-x: auto;
-  padding-bottom: 8px;
+  /* 左側留 2px，避免最左機櫃框的左邊線被 overflow-x 裁掉 */
+  padding: 0 2px 8px;
 }
 .rack-row > * { flex: 0 0 auto; }
 .rack-row :deep(.n-card) { width: auto; height: 100%; }

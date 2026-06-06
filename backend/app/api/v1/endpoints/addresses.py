@@ -259,6 +259,10 @@ async def get_address(
     out.mac_vendor = await vendor_for_mac(session, obj.mac)
     # 算出此 IP 實際會被執行的探測（子網路要跑 − IP 略過 ∩ 代理能力）給詳情頁顯示
     out.effective_probes = await _effective_probes_for(session, obj)
+    # OS 依來源優先序（scanner/librenms/wazuh）解析有效值 + 來源
+    from app.services.os_precedence import effective_os
+    _os = await effective_os(session, obj)
+    out.os_guess = _os["os_guess"]; out.os_family = _os["os_family"]; out.os_source = _os["os_source"]
     return out
 
 

@@ -801,6 +801,8 @@ async def get_ip_detail(session: AsyncSession, *, user: User, ip: str) -> dict[s
     sub = await session.get(Subnet, obj.subnet_id) if obj.subnet_id else None
     dev = await session.get(Device, obj.device_id) if obj.device_id else None
     cust = await session.get(Customer, obj.customer_id) if obj.customer_id else None
+    from app.services.os_precedence import effective_os
+    _os = await effective_os(session, obj)
     return {
         "found": True,
         "ip": obj.ip,
@@ -823,6 +825,9 @@ async def get_ip_detail(session: AsyncSession, *, user: User, ip: str) -> dict[s
         "last_seen_scanner": obj.last_seen_scanner,
         "last_seen_librenms": obj.last_seen_librenms,
         "last_seen_dns": obj.last_seen_dns,
+        # OS 偵測（依來源優先序 scanner/librenms/wazuh 解析）+ 此 IP 略過的探測項目
+        **_os,
+        "excluded_probes": list(obj.excluded_probes or []),
     }
 
 
@@ -1017,6 +1022,10 @@ async def list_scan_agents(session: AsyncSession, *, user: User, limit: int = 20
     return {"agents": [{
         "id": str(a.id), "name": a.name, "enabled": a.enabled,
         "last_seen_at": a.last_seen_at, "agent_version": a.agent_version, "last_error": a.last_error,
+        "last_source_ip": a.last_source_ip,
+        # 此代理被允許執行的探測 / 實際裝得起的探測（os 需 nmap…）
+        "enabled_probes": list(a.enabled_probes or []),
+        "available_probes": list(a.available_probes) if a.available_probes is not None else None,
     } for a in rows]}
 
 

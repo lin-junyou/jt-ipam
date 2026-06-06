@@ -4,6 +4,45 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.101] — 2026-06-06
+
+### Changed
+- Dashboard **Section heat** card redesigned: the bar now reflects *average subnet
+  utilization* (no longer diluted to ~0% by a single large sparse subnet), plus a
+  per-section distribution of subnets by utilization band (full / high / medium /
+  low) and a subnet/used summary — the card is far more informative.
+
+### Fixed
+- Racks: the leftmost rack's frame left border was clipped by the horizontal-scroll
+  container; added small side padding so it renders fully.
+- OS source precedence section title wording.
+
+## [0.4.100] — 2026-06-06
+
+### Added
+- **OS source precedence** (scan agent / LibreNMS / Wazuh): a drag-to-reorder list
+  (under Name / ARP source precedence) that decides which source wins when several
+  report an OS; the IP detail OS row shows the resolved source.
+- Racks: the "merged single card" toggle is now a clear two-option switch (separate
+  cards / merged card); the merged card gains a shared front/rear toggle and an
+  export action (combined device list).
+
+### Changed
+- Audit forwarding settings relabelled from "Graylog" to the generic "log server"
+  (GELF / syslog work with any collector).
+- IP list OS column shows on one line (icon never shrinks; label truncates when
+  space is tight); hostname column narrowed to give other columns room.
+- Scan-agent table column widths tuned so "last seen" no longer wraps.
+- switch_port tooltip always shows the full `device@port` text (plus the
+  low-confidence note when applicable).
+
+## [0.4.99] — 2026-06-06
+
+### Changed
+- MCP tools surface the new scan/OS fields: `get_ip_detail` returns OS guess /
+  family / source and excluded probes; `list_scan_agents` returns enabled /
+  available probes and last source IP.
+
 ## [0.4.98] — 2026-06-06
 
 ### Changed

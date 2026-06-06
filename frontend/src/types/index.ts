@@ -92,6 +92,7 @@ export interface IPAddress {
   excluded_probes: string[];
   os_guess: string | null;
   os_family: string | null;
+  os_source: string | null;
   probe_last_run: Record<string, string> | null;
   effective_probes: string[] | null;
   ptr_ignore: boolean;

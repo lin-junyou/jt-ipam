@@ -387,7 +387,7 @@ const allIpColumns = computed<DataTableColumns<IPAddress>>(() => autoSort([
     render: (r) => (r as any).__gap
       ? h("div", { style: "text-align: center; color: var(--n-text-color-3, #999); font-style: italic" }, gapLabel(r))
       : r.ip },
-  { title: t("addresses.hostname"), key: "hostname", minWidth: 140,
+  { title: t("addresses.hostname"), key: "hostname", minWidth: 120,
     ellipsis: { tooltip: true }, render: (r) => (r as any).__gap ? "" : (r.hostname ?? "") },
   { title: t("common.status"), key: "state", width: 100,
     render: (r) => (r as any).__gap ? "" : stateTag(r.state) },
@@ -411,13 +411,17 @@ const allIpColumns = computed<DataTableColumns<IPAddress>>(() => autoSort([
   { title: t("addresses.mac"), key: "mac", width: 150, render: (r) => r.mac ?? "" },
   { title: t("cols.vendor"), key: "mac_vendor", width: 140,
     ellipsis: { tooltip: true }, render: (r) => r.mac_vendor ?? "—" },
-  { title: t("cols.os"), key: "os", width: 70,
+  { title: t("cols.os"), key: "os", width: 110,
     render: (r) => {
       if ((r as any).__gap || !r.os_family) return "—";
       const label = osFamilyLabel(catalog.value.os_families, r.os_family, locale.value);
-      return h("span", { title: r.os_guess ?? undefined }, [
-        h(OsIcon, { family: r.os_family, size: 16 }),
-        label ? h("span", { style: "margin-left:4px" }, label) : null,
+      // 一行顯示，icon 永遠不縮；空間不夠時 label 被裁掉、只剩 icon
+      return h("div", {
+        style: "display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap",
+        title: r.os_guess ?? label ?? undefined,
+      }, [
+        h("span", { style: "flex:none;display:inline-flex" }, h(OsIcon, { family: r.os_family, size: 16 })),
+        label ? h("span", { style: "overflow:hidden;text-overflow:ellipsis" }, label) : null,
       ]);
     } },
   { title: t("addresses.owner"), key: "owner", width: 120,
@@ -427,9 +431,13 @@ const allIpColumns = computed<DataTableColumns<IPAddress>>(() => autoSort([
     render: (r) => !r.switch_port ? ""
       : h(NTooltip, null, {
           trigger: () => h(SwitchPortLabel, { value: r.switch_port, dim: r.switch_port_confident === false }),
+          // 彈出文字一律含完整 裝置@連接埠 全文；低信心時再附上說明
           default: () => r.switch_port_confident === false
-            ? t("addresses.switch_port_uncertain")
-            : r.switch_port }) },
+            ? h("div", { style: "max-width:320px;line-height:1.5" }, [
+                h("div", { style: "font-family:monospace;word-break:break-all" }, r.switch_port ?? ""),
+                h("div", { style: "margin-top:4px" }, t("addresses.switch_port_uncertain")),
+              ])
+            : h("span", { style: "font-family:monospace;word-break:break-all" }, r.switch_port ?? "") }) },
   { title: t("cols.device"), key: "device", width: 150, ellipsis: { tooltip: true },
     render: (r) => {
       if ((r as any).__gap || !r.device_id) return "—";

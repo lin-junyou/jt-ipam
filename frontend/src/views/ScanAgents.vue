@@ -203,12 +203,12 @@ function iconAction(icon: any, label: string, onClick: () => void, type?: any) {
 const allCols = computed<DataTableColumns<ScanAgent>>(() => autoSort([
   { title: t("common.name"), key: "name", minWidth: 160, ellipsis: { tooltip: true } },
   {
-    title: t("common.enabled"), key: "enabled", width: 100,
+    title: t("common.enabled"), key: "enabled", width: 90,
     render: (r) => h(NTag, { size: "small", type: r.enabled ? "success" : "default" },
       () => r.enabled ? t("common.enabled") : t("common.disabled")),
   },
   {
-    title: t("scanAgentHelp.col_key"), key: "has_key", width: 120,
+    title: t("scanAgentHelp.col_key"), key: "has_key", width: 96,
     render: (r) => h(NTag, { size: "small", type: r.has_key ? "info" : "warning" },
       () => r.has_key ? t("scanAgentHelp.key_set") : t("scanAgentHelp.key_none")),
   },
@@ -235,10 +235,11 @@ const allCols = computed<DataTableColumns<ScanAgent>>(() => autoSort([
       ? h("span", { style: "font-family:monospace" }, r.last_source_ip) : "—",
   },
   {
-    title: t("scanAgentHelp.col_subnets"), key: "subnet_count", width: 90,
+    title: t("scanAgentHelp.col_subnets"), key: "subnet_count", width: 78,
     render: (r) => r.subnet_count ?? 0,
   },
-  { title: t("scanAgentHelp.col_last_seen"), key: "last_seen_at", width: 170, render: (r) => fmtDateTime(r.last_seen_at) },
+  { title: t("scanAgentHelp.col_last_seen"), key: "last_seen_at", width: 186,
+    render: (r) => h("span", { style: "white-space:nowrap" }, fmtDateTime(r.last_seen_at)) },
   { title: t("scanAgentHelp.col_last_error"), key: "last_error", minWidth: 160, ellipsis: { tooltip: true }, render: (r) => r.last_error ?? "—" },
   {
     title: t("common.actions"), key: "actions", className: "col-actions", width: 172,
