@@ -4,6 +4,42 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.108] — 2026-06-07
+
+### Fixed
+- **Effective status stuck "offline" after a scan-agent reported the host alive.**
+  The agent `/report` endpoint stamped `last_seen_scanner` but never recomputed
+  `effective_status`, so 實際狀態 reflected the last LibreNMS recompute (which could
+  be stale by days). It now flips the IP to `online (scanner)` / `online` immediately
+  on a fresh agent sighting and logs the offline→online transition.
+
+### Added
+- **Installer auto-creates the first `admin` account with a random password** and
+  prints it once at the end (also saved to `/etc/jt-ipam/.admin-initial-password`,
+  root-only). README documents the `create-admin --force-update` password-reset CLI.
+- **Scan-agent installer now installs optional probe tools** (`nmap`,
+  `samba-common-bin`, `avahi-utils`) so OS / NetBIOS / mDNS probes work out of the
+  box; skip with `JT_IPAM_SKIP_PROBE_TOOLS=1`.
+- **"Install help" popover next to unavailable probes** (scan-agent page and the
+  subnet edit dialog) showing the exact package/command to unlock the probe.
+
+## [0.4.107] — 2026-06-07
+
+### Added
+- **Subnet scope for Wazuh / Proxmox VE / AdGuard / DNS integrations** (migration
+  0072), mirroring LibreNMS: each integration can be limited to specific subnets so
+  syncs only match IPs within those subnets — overlapping subnets from unrelated
+  systems no longer mis-attach hostname / OS / etc. Empty scope = global matching.
+
+### Changed
+- Subnet edit: scan-probe checkboxes are disabled when the selected scan agent
+  can't run that probe (consistent with the scan-agent page).
+- NAT table: clicking a rule row opens its detail (ignores the IP / device links).
+- Subnet list: the tree expand arrow now sits on the CIDR column, not the pin column.
+
+### Fixed
+- switch_port tooltip shows the `device@port` form (not `device / port`).
+
 ## [0.4.106] — 2026-06-07
 
 ### Added

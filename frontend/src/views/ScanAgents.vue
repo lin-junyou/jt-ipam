@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import {
   NCard, NDataTable, NSpace, NIcon, NButton, NModal, NForm, NFormItem,
   NInput, NSwitch, NPopconfirm, NTag, NInputGroup, NAlert, NSelect, NTooltip,
-  NCheckbox, NCheckboxGroup, NInputNumber,
+  NCheckbox, NCheckboxGroup, NInputNumber, NPopover,
   useMessage, type DataTableColumns,
 } from "naive-ui";
 import {
@@ -59,6 +59,19 @@ const probeIntervals = ref<Record<string, number>>({});
 const availProbes = computed<string[] | null>(() => editing.value?.available_probes ?? null);
 function probeAvailable(key: string): boolean {
   return availProbes.value === null || availProbes.value.includes(key);
+}
+// 探測所需的工具 / 安裝指令（代理主機上安裝後，下次回報即解鎖該探測）
+const PROBE_INSTALL: Record<string, string> = {
+  os: "sudo apt install nmap",
+  ports: "sudo apt install nmap",
+  netbios: "sudo apt install samba-common-bin   # 提供 nmblookup",
+  mdns: "sudo apt install avahi-utils   # 提供 avahi-resolve",
+};
+function probeInstall(key: string): string {
+  return (
+    PROBE_INSTALL[key] ??
+    "請確認掃描代理主機具備該探測所需的系統工具與權限（例如 root / cap_net_raw、可連到 DNS 等）。"
+  );
 }
 // 已勾選的重型探測（需顯示間隔輸入）
 const heavyChecked = computed(() =>
@@ -332,6 +345,17 @@ onMounted(() => { void refresh(); });
                   <n-checkbox v-else :value="p.key">
                     {{ probeLabel(p, locale) }}
                   </n-checkbox>
+                  <n-popover v-if="!probeAvailable(p.key)" trigger="click" placement="right">
+                    <template #trigger>
+                      <n-button text size="tiny" type="primary" class="probe-help-btn">
+                        {{ t("scan_probes.install_help") }}
+                      </n-button>
+                    </template>
+                    <div class="probe-help-pop">
+                      <div class="probe-help-intro">{{ t("scan_probes.install_help_intro") }}</div>
+                      <code class="probe-help-cmd">{{ probeInstall(p.key) }}</code>
+                    </div>
+                  </n-popover>
                   <n-tooltip v-if="p.intrusive" trigger="hover">
                     <template #trigger>
                       <n-tag size="small" type="warning" :bordered="false" round>
@@ -486,4 +510,16 @@ onMounted(() => { void refresh(); });
 .agent-help .paths-note { margin-top: 8px; font-size: 12px; opacity: .6; }
 .probe-hint { font-size: 12px; opacity: .65; line-height: 1.5; }
 .probe-row { display: flex; align-items: center; gap: 6px; }
+.probe-help-btn { font-size: 12px; }
+.probe-help-pop { max-width: 320px; }
+.probe-help-intro { font-size: 12.5px; line-height: 1.6; margin-bottom: 6px; }
+.probe-help-cmd {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--n-code-color, rgba(0, 0, 0, 0.05));
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
 </style>

@@ -194,10 +194,10 @@ function switchPortCell(r: IPAddress) {
     // 彈出文字一律含完整 裝置@連接埠 全文；低信心時再附上說明
     default: () => r.switch_port_confident === false
       ? h("div", { style: "max-width:320px;line-height:1.5" }, [
-          h("div", { style: "font-family:monospace;word-break:break-all" }, r.switch_port ?? ""),
+          h("div", { style: "font-family:monospace;word-break:break-all" }, (r.switch_port ?? "").replace(" / ", "@")),
           h("div", { style: "margin-top:4px" }, t("addresses.switch_port_uncertain")),
         ])
-      : h("span", { style: "font-family:monospace;word-break:break-all" }, r.switch_port ?? ""),
+      : h("span", { style: "font-family:monospace;word-break:break-all" }, (r.switch_port ?? "").replace(" / ", "@")),
   });
 }
 

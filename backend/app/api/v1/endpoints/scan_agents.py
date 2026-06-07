@@ -525,11 +525,15 @@ async def agent_report(
                 note=(f"此 IP 由掃描代理「{agent.name}」於 "
                       f"{now.astimezone().strftime('%Y-%m-%d %H:%M')} 主動探索時發現並自動建立。"),
                 last_seen_scanner=now,
+                effective_status="online (scanner)",
             )
             session.add(ipa)
             created += 1
         else:
             ipa.last_seen_scanner = now
+            # 掃描代理看到回應＝即時上線證據，立刻更新實際狀態（不必等 LibreNMS sync）
+            from app.services.librenms import mark_scanner_seen
+            await mark_scanner_seen(session, ipa, now)
         if item.mac:
             from app.services.arp_precedence import consider_mac
             await consider_mac(session, ip=ipa, mac=item.mac, source="scanner")

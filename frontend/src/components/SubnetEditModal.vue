@@ -15,6 +15,7 @@ import {
   NTooltip,
   NButton,
   NIcon,
+  NPopover,
   useMessage,
 } from "naive-ui";
 import {
@@ -59,6 +60,31 @@ const vlans = ref<VLAN[]>([]);
 const vrfs = ref<VRF[]>([]);
 const allSubnets = ref<Subnet[]>([]);
 const scanAgentOpts = ref<{ label: string; value: string }[]>([]);
+const agentAvail = ref<Record<string, string[]>>({});
+// 選定掃描代理「實際能跑」的探測集合；代理沒回報(空)時回 null = 不限制
+const selectedAgentProbes = computed<Set<string> | null>(() => {
+  const id = form.value.scan_agent_id;
+  if (!id) return null;
+  const av = agentAvail.value[id];
+  return av && av.length ? new Set(av) : null;
+});
+function probeUnsupported(key: string): boolean {
+  const s = selectedAgentProbes.value;
+  return !!s && !s.has(key);
+}
+// 探測所需的工具 / 安裝指令（與掃描代理頁一致）
+const PROBE_INSTALL: Record<string, string> = {
+  os: "sudo apt install nmap",
+  ports: "sudo apt install nmap",
+  netbios: "sudo apt install samba-common-bin   # 提供 nmblookup",
+  mdns: "sudo apt install avahi-utils   # 提供 avahi-resolve",
+};
+function probeInstall(key: string): string {
+  return (
+    PROBE_INSTALL[key] ??
+    "請確認掃描代理主機具備該探測所需的系統工具與權限（例如 root / cap_net_raw、可連到 DNS 等）。"
+  );
+}
 const locationOpts = ref<{ label: string; value: string }[]>([]);
 
 const sectionOpts = computed(() => sections.value.map((s) => ({ label: s.name, value: s.id })));
@@ -103,6 +129,10 @@ async function loadAuxOpts() {
   try {
     const ag = await listScanAgents();
     scanAgentOpts.value = ag.items.map((a) => ({ label: a.name, value: a.id }));
+    // 記錄每個代理「實際能跑」的探測（available_probes）→ 子網路勾選時據此反灰不支援項
+    agentAvail.value = Object.fromEntries(
+      ag.items.map((a) => [a.id, (a as any).available_probes ?? []]),
+    );
   } catch { /* silent */ }
   try {
     const loc = await listLocations();
@@ -280,7 +310,8 @@ async function submit() {
             <div style="font-size: 13px; margin-bottom: 4px;">{{ t("scan_probes.subnet_probes") }}</div>
             <n-checkbox-group v-model:value="form.scan_method" :disabled="!form.scan_enabled">
               <n-space vertical size="small">
-                <n-checkbox v-for="p in catalog.probes" :key="p.key" :value="p.key">
+                <n-checkbox v-for="p in catalog.probes" :key="p.key" :value="p.key"
+                            :disabled="probeUnsupported(p.key)">
                   {{ probeLabel(p, locale) }}
                   <n-tooltip v-if="p.intrusive" trigger="hover">
                     <template #trigger>
@@ -290,6 +321,25 @@ async function submit() {
                     </template>
                     {{ t("scan_probes.intrusive_warn") }}
                   </n-tooltip>
+                  <span v-if="probeUnsupported(p.key)" style="margin-left:4px; font-size:11px; opacity:.6">
+                    （{{ t("scan_probes.agent_unsupported") }}）
+                  </span>
+                  <n-popover v-if="probeUnsupported(p.key)" trigger="click" placement="right">
+                    <template #trigger>
+                      <n-button text size="tiny" type="primary" style="font-size:11px"
+                                @click.stop.prevent>
+                        {{ t("scan_probes.install_help") }}
+                      </n-button>
+                    </template>
+                    <div style="max-width:320px">
+                      <div style="font-size:12.5px; line-height:1.6; margin-bottom:6px">
+                        {{ t("scan_probes.install_help_intro") }}
+                      </div>
+                      <code style="display:block; padding:6px 8px; border-radius:4px;
+                                   background:rgba(0,0,0,.05); font-size:12px;
+                                   white-space:pre-wrap; word-break:break-all">{{ probeInstall(p.key) }}</code>
+                    </div>
+                  </n-popover>
                 </n-checkbox>
               </n-space>
             </n-checkbox-group>

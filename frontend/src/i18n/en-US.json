@@ -183,7 +183,10 @@
     "intervals": "Probe intervals",
     "intrusive": "intrusive",
     "intrusive_warn": "Intrusive probe; IDS may alert. Use a long interval.",
+    "agent_unsupported": "not supported by this scan agent",
     "unavailable": "agent lacks support",
+    "install_help": "Install help",
+    "install_help_intro": "Install the matching tool on the scan-agent host; the probe unlocks on the next check-in:",
     "needs": "Needs",
     "last_run": "Last run",
     "none": "none",
@@ -1032,6 +1035,9 @@
     "oui_managed_in_admin": "(database maintained in admin)"
   },
   "dns_admin": {
+    "scope_subnets": "Limit to subnets",
+    "scope_all": "All (no limit)",
+    "scope_hint": "For overlapping ranges: only match IPs within these subnets. Empty = global.",
     "title": "DNS Servers",
     "type": "Type",
     "endpoint": "Endpoint",
@@ -1132,6 +1138,9 @@
     "sync_openvpn_label": "OpenVPN sessions"
   },
   "wazuh_admin": {
+    "scope_subnets": "Limit to subnets",
+    "scope_all": "All (no limit)",
+    "scope_hint": "For overlapping ranges: only match IPs within these subnets. Empty = global.",
     "title": "Wazuh",
     "missing_agents": "IPs missing Wazuh agent",
     "agents_count": "Agents",
@@ -1296,6 +1305,9 @@
     "group": "Group"
   },
   "virt": {
+    "scope_subnets": "Limit to subnets",
+    "scope_all": "All (no limit)",
+    "scope_hint": "For overlapping ranges: only match IPs within these subnets. Empty = global.",
     "clusters": "Clusters",
     "vms": "VMs",
     "proxmox": "Proxmox VE Connections",
@@ -1684,6 +1696,9 @@
     "no_visible_resources": "You have no accessible resources yet; please ask an administrator to grant access"
   },
   "adguard_admin": {
+    "scope_subnets": "Limit to subnets",
+    "scope_all": "All (no limit)",
+    "scope_hint": "For overlapping ranges: only match IPs within these subnets. Empty = global.",
     "api_user": "API user",
     "password": "Password",
     "password_keep": "Password (blank = unchanged)",

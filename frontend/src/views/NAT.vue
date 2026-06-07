@@ -452,6 +452,14 @@ onMounted(() => { void refresh(); void loadOpts(); });
       :row-key="(r: NAT) => r.id"
       :checked-row-keys="checkedKeys"
       @update:checked-row-keys="(keys: DataTableRowKey[]) => checkedKeys = keys"
+      :row-props="(row: NAT) => ({
+        style: 'cursor: pointer',
+        onClick: (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('a') || target.closest('.n-button') || target.closest('.n-checkbox') || target.closest('.n-tag')) return;
+          openEdit(row);
+        },
+      })"
     />
 
     <n-modal v-model:show="show" preset="card" style="width: 540px">

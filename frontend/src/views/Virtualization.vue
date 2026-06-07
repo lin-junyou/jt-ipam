@@ -14,6 +14,7 @@ import {
   EditIcon, CloneIcon, AdvancedIcon, DevicesIcon,
 } from "@/icons";
 import { Virt, type ProxmoxInstance } from "@/api/phase3";
+import { listSubnets } from "@/api/subnets";
 import { autoSort } from "@/composables/useTableSort";
 import { useCustomers } from "@/composables/useCustomers";
 import { useColumnPrefs } from "@/composables/useColumnPrefs";
@@ -112,10 +113,20 @@ function emptyPxForm() {
     api_url: "https://", extra_urls: "",
     auth_username: "root@pam", auth_token_id: "", token_secret: "",
     verify_tls: false, enabled: true, sync_interval_seconds: 600,
+    scope_subnet_ids: [] as string[],
   };
 }
 const pxForm = ref(emptyPxForm());
 const clusterOptions = computed(() => clusters.value.map((c) => ({ label: c.name, value: c.id })));
+
+const subnetOptions = ref<{ label: string; value: string }[]>([]);
+async function loadSubnetOptions() {
+  try {
+    const r = await listSubnets({ page: 1, pageSize: 500 });
+    subnetOptions.value = r.items.map((s) => ({
+      label: s.description ? `${s.cidr} — ${s.description}` : s.cidr, value: s.id }));
+  } catch { /* silent */ }
+}
 
 function openPxCreate() {
   editingPxId.value = null;
@@ -133,6 +144,7 @@ function fillFromRow(r: ProxmoxInstance) {
     verify_tls: r.verify_tls,
     enabled: r.enabled,
     sync_interval_seconds: r.sync_interval_seconds,
+    scope_subnet_ids: r.scope_subnet_ids ?? [],
   };
 }
 function openPxEdit(r: ProxmoxInstance) {
@@ -161,6 +173,7 @@ async function submitPx() {
         auth_username: f.auth_username, auth_token_id: f.auth_token_id,
         verify_tls: f.verify_tls, enabled: f.enabled,
         sync_interval_seconds: f.sync_interval_seconds,
+        scope_subnet_ids: f.scope_subnet_ids,
       };
       if (f.token_secret) payload.token_secret = f.token_secret;  // 留空＝不變
       await Virt.updateProxmox(editingPxId.value, payload);
@@ -170,6 +183,7 @@ async function submitPx() {
         auth_username: f.auth_username, auth_token_id: f.auth_token_id,
         token_secret: f.token_secret, verify_tls: f.verify_tls,
         enabled: f.enabled, sync_interval_seconds: f.sync_interval_seconds,
+        scope_subnet_ids: f.scope_subnet_ids,
       });
     }
     showPx.value = false;
@@ -302,6 +316,7 @@ onMounted(() => {
   tab.value = adminMode.value ? "proxmox" : "clusters";
   void refresh();
   void ensureCustomerOptsLoaded();
+  void loadSubnetOptions();
 });
 </script>
 
@@ -421,6 +436,13 @@ onMounted(() => {
             <n-input-number v-model:value="pxForm.sync_interval_seconds" :min="60" :max="86400" />
           </n-form-item>
         </n-space>
+        <n-form-item :label="t('virt.scope_subnets')">
+          <n-select v-model:value="pxForm.scope_subnet_ids" :options="subnetOptions"
+                    multiple filterable clearable :placeholder="t('virt.scope_all')" />
+        </n-form-item>
+        <div style="margin: -8px 0 4px">
+          <span style="font-size: 11px; opacity: .7">{{ t("virt.scope_hint") }}</span>
+        </div>
         <n-alert type="info" :title="t('virt.help_title')" :bordered="false"
                  style="margin-top: 4px">
           <ol class="px-help">

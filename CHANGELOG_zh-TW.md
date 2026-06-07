@@ -4,6 +4,39 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.108] — 2026-06-07
+
+### 修正
+- **掃描代理回報主機存活後，「實際狀態」仍卡在「離線」。** 代理 `/report` 端點只更新
+  `last_seen_scanner`，卻沒有重算 `effective_status`，導致實際狀態停留在上次 LibreNMS
+  重算結果（可能已過時好幾天）。現在只要代理當次掃到回應，便立即把該 IP 翻成
+  `online (scanner)` / `online`，並記錄離線→上線的異動。
+
+### 新增
+- **安裝程式自動建立第一個 `admin` 帳號並產生隨機密碼**，於結束時印出一次（亦存到
+  `/etc/jt-ipam/.admin-initial-password`，僅 root 可讀）。README 補上
+  `create-admin --force-update` 重置密碼的 CLI 說明。
+- **掃描代理安裝程式會一併安裝選用探測工具**（`nmap`、`samba-common-bin`、
+  `avahi-utils`），讓 OS / NetBIOS / mDNS 探測開箱即用；可用
+  `JT_IPAM_SKIP_PROBE_TOOLS=1` 略過。
+- **不可用探測旁新增「安裝說明」彈出**（掃描代理頁與子網路編輯對話框），顯示解鎖該探測
+  所需的套件 / 指令。
+
+## [0.4.107] — 2026-06-07
+
+### 新增
+- **Wazuh / Proxmox VE / AdGuard / DNS 整合的限定子網路範圍**（migration 0072），比照
+  LibreNMS：各整合可限定只在指定子網路內比對 IP，避免不相關系統的重疊網段把 hostname /
+  OS 等資訊誤掛到別的 IP。留空＝全域比對。
+
+### 變更
+- 子網路編輯：所選掃描代理不支援的探測項目會反灰（與掃描代理頁一致）。
+- NAT 表格：點規則列可開啟該筆細節（會略過 IP / 裝置連結）。
+- 子網路列表：樹狀展開箭頭改放在 CIDR 欄，不再佔用釘選欄。
+
+### 修正
+- switch_port 提示改顯示 `裝置@連接埠` 格式（非 `裝置 / 連接埠`）。
+
 ## [0.4.106] — 2026-06-07
 
 ### 新增

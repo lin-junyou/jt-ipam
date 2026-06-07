@@ -360,6 +360,23 @@ EOF
     sudo -u "$JTIPAM_USER" --preserve-env=PATH \
         bash -c "set -a; source $ENV_FILE; set +a; .venv/bin/alembic upgrade head"
 
+    # -- 7b. first admin (only if none yet): generate a random password and show it once --
+    ADMIN_PW_RECORD="$ETC_DIR/.admin-initial-password"
+    INITIAL_ADMIN_PW=""
+    if [[ ! -f "$ADMIN_PW_RECORD" ]]; then
+        local _gen_pw _tmp_pw
+        _gen_pw="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 20)"
+        _tmp_pw="$(mktemp)"; chmod 600 "$_tmp_pw"; printf '%s' "$_gen_pw" > "$_tmp_pw"; chown "$JTIPAM_USER" "$_tmp_pw"
+        # create-admin errors (non-zero) if an admin already exists → then we just skip silently
+        if sudo -u "$JTIPAM_USER" --preserve-env=PATH bash -c \
+            "set -a; source $ENV_FILE; set +a; .venv/bin/python -m app.cli.bootstrap create-admin --username admin --email admin@localhost --password-stdin < '$_tmp_pw'" >/dev/null 2>&1; then
+            install -m 0600 -o root -g root /dev/null "$ADMIN_PW_RECORD"
+            printf '%s' "$_gen_pw" > "$ADMIN_PW_RECORD"
+            INITIAL_ADMIN_PW="$_gen_pw"
+        fi
+        rm -f "$_tmp_pw"
+    fi
+
     # -- 8. frontend build --
     log "Building frontend…"
     cd "$FRONTEND_DIR"
@@ -463,6 +480,22 @@ EOF
             ;;
     esac
     log "Review /etc/jt-ipam/backend.env (especially APP_PUBLIC_URL / CORS_ORIGINS)"
+
+    # -- first-admin credentials --
+    if [[ -n "$INITIAL_ADMIN_PW" ]]; then
+        echo
+        echo "  ============================================================"
+        echo "   First admin account created — change this password after login:"
+        echo "     username: admin"
+        echo "     password: ${INITIAL_ADMIN_PW}"
+        echo "   (also saved to ${ADMIN_PW_RECORD}, root-only)"
+        echo "   Reset later: sudo -u ${JTIPAM_USER} bash -c 'cd ${BACKEND_DIR}; set -a; source ${ENV_FILE}; set +a; .venv/bin/python -m app.cli.bootstrap create-admin --username admin --email admin@localhost --password-stdin --force-update'"
+        echo "  ============================================================"
+        echo
+    else
+        log "An admin account already exists; skipped creating one. To reset its password:"
+        log "  sudo -u ${JTIPAM_USER} bash -c 'cd ${BACKEND_DIR}; set -a; source ${ENV_FILE}; set +a; .venv/bin/python -m app.cli.bootstrap create-admin --username admin --email admin@localhost --password-stdin --force-update'"
+    fi
 }
 
 # =============================================================================

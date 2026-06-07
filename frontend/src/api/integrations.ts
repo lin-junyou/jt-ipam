@@ -19,6 +19,7 @@ export interface DNSServer {
   extra_config?: string | null;  // JSON：username / verify_tls 等
   enabled: boolean;
   sync_interval_seconds: number;
+  scope_subnet_ids?: string[] | null;
   last_sync_at?: string | null;
   last_error?: string | null;
   created_at: string;
@@ -40,6 +41,7 @@ export interface DNSServerCreate {
   extra_config?: string | null;
   enabled?: boolean;
   sync_interval_seconds?: number;
+  scope_subnet_ids?: string[] | null;
   api_key?: string | null;
   api_secret?: string | null;
   tsig_key?: string | null;
@@ -361,6 +363,7 @@ export interface WazuhInstance {
   enabled: boolean;
   verify_tls: boolean;
   sync_interval_seconds: number;
+  scope_subnet_ids?: string[] | null;
   last_sync_at: string | null;
   last_error: string | null;
   description: string | null;
@@ -376,6 +379,7 @@ export interface WazuhInstanceCreate {
   enabled?: boolean;
   verify_tls?: boolean;
   description?: string;
+  scope_subnet_ids?: string[] | null;
 }
 
 export interface WazuhAgent {
@@ -480,6 +484,7 @@ export interface AdGuardInstance {
   sync_clients: boolean;
   sync_rewrites: boolean;
   sync_interval_seconds: number;
+  scope_subnet_ids?: string[] | null;
   description: string | null;
   last_sync_at: string | null;
   last_error: string | null;
@@ -498,6 +503,7 @@ export interface AdGuardCreate {
   sync_rewrites?: boolean;
   sync_interval_seconds?: number;
   description?: string;
+  scope_subnet_ids?: string[] | null;
 }
 
 export async function listAdGuard(): Promise<Paginated<AdGuardInstance>> {

@@ -96,6 +96,13 @@ function pinToggle(id: string) { void toggleSubnetPin(id); }
 const allColumns: DataTableColumns<Subnet> = [
   { type: "selection" },
   {
+    // CIDR 放在最前（selection 之後）→ n-data-table 的展開箭頭會落在此欄，與階層縮排一致，
+    // 不會出現在「釘選」欄
+    title: () => t("subnets.cidr"), key: "cidr", minWidth: 180, ellipsis: { tooltip: true },
+    render: (r) => links.subnet(r.id, r.cidr),
+    sorter: (a, b) => cidrSortNum(a.cidr) - cidrSortNum(b.cidr) || a.cidr.localeCompare(b.cidr),
+  },
+  {
     title: () => t("cols.pinned"), key: "pinned", width: 64, align: "center",
     render: (r) => h(NTooltip, null, {
       trigger: () => h(NButton, {
@@ -104,11 +111,6 @@ const allColumns: DataTableColumns<Subnet> = [
       }, { icon: () => h(NIcon, { color: isSubnetPinned(r.id) ? "#f0a020" : undefined }, () => h(PinIcon)) }),
       default: () => t("common.pin"),
     }),
-  },
-  {
-    title: () => t("subnets.cidr"), key: "cidr", minWidth: 160, ellipsis: { tooltip: true },
-    render: (r) => links.subnet(r.id, r.cidr),
-    sorter: (a, b) => cidrSortNum(a.cidr) - cidrSortNum(b.cidr) || a.cidr.localeCompare(b.cidr),
   },
   {
     title: () => t("common.description"),

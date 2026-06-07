@@ -104,6 +104,7 @@ async def create_server(
         extra_config=payload.extra_config,
         enabled=payload.enabled,
         sync_interval_seconds=payload.sync_interval_seconds,
+        scope_subnet_ids=payload.scope_subnet_ids,
     )
     session.add(obj)
     try:
@@ -161,6 +162,8 @@ async def update_server(
         obj.enabled = payload.enabled
     if payload.sync_interval_seconds is not None:
         obj.sync_interval_seconds = payload.sync_interval_seconds
+    if payload.scope_subnet_ids is not None:
+        obj.scope_subnet_ids = payload.scope_subnet_ids
     for field in _SECRET_FIELDS:
         v = getattr(payload, field, None)
         if v:

@@ -1,4 +1,4 @@
-# jt-ipam v0.4.106（繁體中文）
+# jt-ipam v0.4.108（繁體中文）
 
 **🌐 [專案介紹網站 / Project site →](https://jasoncheng7115.github.io/jt-ipam/)**
 
@@ -55,6 +55,21 @@ curl -fsSL https://raw.githubusercontent.com/jasoncheng7115/jt-ipam/main/scripts
 ```
 
 升級：`sudo bash /opt/jt-ipam/scripts/jt-ipam.sh upgrade`（**腳本內含 `git pull`**，直接跑即可）。詳見 [`docs/INSTALL.md`](docs/INSTALL.md)。
+
+### 首次登入與重置管理員密碼
+
+全新安裝時，腳本會**自動建立 `admin` 帳號、產生隨機密碼並在結束時印出一次**（也存到 `/etc/jt-ipam/.admin-initial-password`，僅 root 可讀）。登入後請立即更換。
+
+重置管理員密碼（或在尚無管理員時建立第一個），在伺服器上執行：
+
+```bash
+sudo -u jtipam bash -c 'cd /opt/jt-ipam/backend; set -a; source /etc/jt-ipam/backend.env; set +a; \
+  .venv/bin/python -m app.cli.bootstrap create-admin \
+    --username admin --email admin@example.com --password-stdin --force-update'
+# 接著在 stdin 輸入新密碼（≥ 12 字元）
+```
+
+不加 `--force-update` 則是新建管理員，而非重置既有帳號。
 
 ## TLS / HTTPS
 

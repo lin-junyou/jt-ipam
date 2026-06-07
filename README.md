@@ -1,4 +1,4 @@
-# jt-ipam v0.4.106
+# jt-ipam v0.4.108
 
 **🌐 [Project site / 專案介紹網站 →](https://jasoncheng7115.github.io/jt-ipam/)**
 
@@ -85,6 +85,21 @@ curl -fsSL https://raw.githubusercontent.com/jasoncheng7115/jt-ipam/main/scripts
 The script installs `postgresql-16` / `python3.12` / `nginx` / `redis`, creates the `jtipam` system account and PG role, generates keys into `/etc/jt-ipam/backend.env`, runs `alembic upgrade head`, builds the frontend, and enables `jt-ipam-backend.service`.
 
 Upgrade an existing install with `sudo bash /opt/jt-ipam/scripts/jt-ipam.sh upgrade` — **the script runs `git pull` itself**, then backup → deps → alembic → build → restart. See [`docs/INSTALL.md`](docs/INSTALL.md).
+
+### First login & resetting the admin password
+
+On a fresh install the script **creates an `admin` account with a random password and prints it once** at the end (also saved to `/etc/jt-ipam/.admin-initial-password`, root-only). Log in and change it immediately.
+
+To reset the admin password (or create the first admin if none exists), run on the server:
+
+```bash
+sudo -u jtipam bash -c 'cd /opt/jt-ipam/backend; set -a; source /etc/jt-ipam/backend.env; set +a; \
+  .venv/bin/python -m app.cli.bootstrap create-admin \
+    --username admin --email admin@example.com --password-stdin --force-update'
+# then type the new password on stdin (≥ 12 chars)
+```
+
+Omit `--force-update` to create a brand-new admin instead of resetting an existing one.
 
 ## TLS / HTTPS
 
