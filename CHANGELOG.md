@@ -4,6 +4,32 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.105] — 2026-06-07
+
+### Fixed
+- Subnet save returned "Invalid request": the edit form sends `master_subnet_id`
+  but `SubnetUpdate` (a strict, extra-forbid schema) didn't declare it. Added the
+  field so editing a subnet works again.
+- Subnet list: clicking a row's tree expand arrow navigated into the subnet instead
+  of expanding its children; the row-click now ignores the expand trigger.
+
+### Changed
+- **Unified subnet edit**: the subnet list and the subnet-detail page now share one
+  `SubnetEditModal` component, so both edit the same fields (section / VLAN / VRF /
+  parent subnet / per-probe scan options / scan agent …) — they previously diverged.
+- Left sidebar: subnets are nested under their parent (by `master_subnet_id`) within
+  each unit group, indented with a "↳" marker (still clickable to open).
+- Responsive top bar restyle: language / theme / account are pill buttons with hover,
+  dividers around the bell, vertically centered with the search box; dropdown carets
+  removed to save width.
+- Graylog guide: suggested Title / Description / Name (`jt_ipam_adapter` /
+  `jt_ipam_cache` / `jt_ipam_table`); both HTTPS and plain-HTTP (8088) lookup URLs;
+  Line Separator `\n`, Ignore characters `#`, Refresh interval 300s, Expire-after-
+  access 300s, Default single/multi value empty; an IP-field-name box that rewrites
+  the pipeline rule live with Graylog field-name validation; rule named
+  `jt-ipam enrich <field> -> <field>_hostname`; pipeline `lookup_value()` uses the
+  table name; examples use `src_ip_hostname`.
+
 ## [0.4.104] — 2026-06-07
 
 ### Fixed

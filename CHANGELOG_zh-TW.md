@@ -4,6 +4,26 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.105] — 2026-06-07
+
+### 修正
+- 子網路存檔出現「Invalid request」：編輯表單會送 `master_subnet_id`，但 `SubnetUpdate`
+  （嚴格 schema、禁止額外欄位）沒宣告它。已補上欄位，編輯子網路恢復正常。
+- 子網路列表：點「展開下層」的箭頭會誤進入該子網路而非展開；已讓 row 點擊忽略展開鈕。
+
+### 變更
+- **統一子網路編輯**：子網路列表與子網路詳情頁改共用同一個 `SubnetEditModal` 元件，
+  兩處編輯欄位完全一致（區段 / VLAN / VRF / 上層子網路 / 逐項掃描 / 掃描代理…），不再分歧。
+- 左側選單：子網段依 `master_subnet_id` 巢狀排在父網段之後並以「↳」縮排（仍可點擊進入）。
+- 頂列 RWD 美化：語言 / 佈景 / 帳號改 pill 按鈕含 hover、鈴鐺兩側分隔線、與搜尋框垂直置中；
+  移除下拉小箭頭以省寬度。
+- Graylog 教學：建議 Title / Description / Name（`jt_ipam_adapter` / `jt_ipam_cache` /
+  `jt_ipam_table`）；HTTPS 與明文 HTTP(8088) 兩種網址；Line Separator `\n`、Ignore
+  characters `#`、Refresh interval 300s、Expire after access 300s、Default single/multi
+  value 留空；IP 欄位名輸入框即時改寫 pipeline rule 並做 Graylog 欄位名驗證；rule 名為
+  `jt-ipam enrich <欄位> -> <欄位>_hostname`；pipeline `lookup_value()` 用對照表名稱；
+  範例改用 `src_ip_hostname`。
+
 ## [0.4.104] — 2026-06-07
 
 ### 修正

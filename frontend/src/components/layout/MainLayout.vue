@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useFloatingHScroll } from "@/composables/useFloatingHScroll";
@@ -88,6 +88,29 @@ const inSubnetContext = computed(() =>
   route.name === "subnets" || route.name === "subnet-detail",
 );
 
+// 在同一個單位群組內，依 master_subnet_id 把子網段排在父網段之後並標記深度（DFS）
+function orderSubnetsHier(items: Subnet[]): { s: Subnet; depth: number }[] {
+  const ids = new Set(items.map((x) => x.id));
+  const childrenBy = new Map<string, Subnet[]>();
+  const roots: Subnet[] = [];
+  for (const s of items) {
+    const pid = (s as any).master_subnet_id as string | null | undefined;
+    if (pid && ids.has(pid)) {
+      (childrenBy.get(pid) ?? childrenBy.set(pid, []).get(pid)!).push(s);
+    } else {
+      roots.push(s);
+    }
+  }
+  const cmp = (a: Subnet, b: Subnet) => a.cidr.localeCompare(b.cidr, undefined, { numeric: true });
+  const out: { s: Subnet; depth: number }[] = [];
+  const walk = (s: Subnet, depth: number) => {
+    out.push({ s, depth });
+    (childrenBy.get(s.id) ?? []).slice().sort(cmp).forEach((c) => walk(c, depth + 1));
+  };
+  roots.slice().sort(cmp).forEach((r) => walk(r, 0));
+  return out;
+}
+
 const subnetTreeChildren = computed<MenuOption[] | undefined>(() => {
   if (!inSubnetContext.value || !navSubnets.value.length) return undefined;
   const groups = new Map<string, { label: string; items: Subnet[] }>();
@@ -109,13 +132,16 @@ const subnetTreeChildren = computed<MenuOption[] | undefined>(() => {
       key: `subnetgrp:${cid}`,
       label: g.label,
       icon: renderIcon(CustomersIcon),
-      children: g.items
-        .slice()
-        .sort((x, y) => x.cidr.localeCompare(y.cidr, undefined, { numeric: true }))
-        .map((s) => ({
+      // 依 master_subnet_id 巢狀排序：子網段緊接在父網段之後並縮排（仍是可點的 leaf，點了會進入該網段）
+      children: orderSubnetsHier(g.items).map(({ s, depth }) => {
+        const text = s.description ? `${s.cidr} (${s.description})` : s.cidr;
+        return {
           key: `subnet:${s.id}`,
-          label: s.description ? `${s.cidr} (${s.description})` : s.cidr,
-        })),
+          label: depth > 0
+            ? () => h("span", { style: `padding-left:${depth * 12}px; opacity:.9` }, `↳ ${text}`)
+            : text,
+        };
+      }),
     }));
   return [
     { key: "subnets-all", label: () => t("nav.subnet_all"), icon: renderIcon(SubnetsIcon) },
@@ -427,29 +453,31 @@ function startDrag(e: MouseEvent) {
         <n-space align="center" justify="space-between" :wrap="false" style="width: 100%; min-width: 0">
           <global-search v-if="me" />
           <span v-else />
-          <n-space class="topbar-ctls" align="center" :size="6" :wrap="false">
+          <n-space class="topbar-ctls" align="center" :size="4" :wrap="false">
             <!-- 語言：寬螢幕顯示名稱，窄螢幕只剩 icon -->
             <n-dropdown :options="localeMenuOptions" trigger="click" @select="pickLocale">
-              <n-button text class="topbar-ctl">
-                <n-icon :size="18" :component="LanguageIcon" />
+              <button type="button" class="topbar-ctl">
+                <n-icon :size="17" :component="LanguageIcon" />
                 <span class="topbar-ctl__label">{{ currentLocaleLabel }}</span>
-              </n-button>
+              </button>
             </n-dropdown>
             <!-- 佈景：寬螢幕顯示名稱，窄螢幕只剩 icon -->
             <n-dropdown :options="themeMenuOptions" trigger="click" @select="pickTheme">
-              <n-button text class="topbar-ctl">
-                <n-icon :size="18" :component="currentThemeIcon" />
+              <button type="button" class="topbar-ctl">
+                <n-icon :size="17" :component="currentThemeIcon" />
                 <span class="topbar-ctl__label">{{ currentThemeLabel }}</span>
-              </n-button>
+              </button>
             </n-dropdown>
+            <span class="topbar-divider" />
             <notification-bell v-if="me" />
+            <span class="topbar-divider" />
             <n-dropdown
               v-if="me"
               :options="userMenuOptions"
               trigger="click"
               @select="handleUserMenu"
             >
-              <n-button text class="topbar-ctl" style="gap: 6px">
+              <button type="button" class="topbar-ctl">
                 <n-icon :size="17" :component="AccountIcon" />
                 <span class="topbar-ctl__label">{{ accountLabel }}</span>
                 <n-tooltip v-if="me.is_admin" :delay="0">
@@ -458,7 +486,7 @@ function startDrag(e: MouseEvent) {
                   </template>
                   {{ t("nav.system_admin") }}
                 </n-tooltip>
-              </n-button>
+              </button>
             </n-dropdown>
           </n-space>
         </n-space>
@@ -509,8 +537,33 @@ function startDrag(e: MouseEvent) {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--n-text-color, inherit);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
+.topbar-ctl:hover { background: rgba(127, 127, 127, 0.12); }
+.topbar-ctl .n-icon { color: var(--n-text-color-2, #888); }
+.topbar-ctl:hover .n-icon { color: var(--primary-color, #18a058); }
 .topbar-ctl__label { white-space: nowrap; }
+.topbar-caret { font-size: 10px; opacity: 0.5; margin-left: 1px; }
+.topbar-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(127, 127, 127, 0.25);
+  margin: 0 4px;
+  flex: none;
+}
+/* 頂列整列與搜尋框垂直置中（避免控制項偏上） */
+.topbar :deep(.n-space) { align-items: center; }
+.topbar-ctls > * { display: inline-flex; align-items: center; }
 
 /* ── 左側選單拖動把手 ── */
 .app-sider { position: relative; }

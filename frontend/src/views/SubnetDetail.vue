@@ -21,21 +21,13 @@ import {
   NPopover,
   NPopconfirm,
   NTooltip,
-  NModal,
-  NForm,
-  NFormItem,
-  NInput,
-  NSelect,
-  NSwitch,
-  NInputNumber,
   NSlider,
   NDropdown,
   type UploadCustomRequestOptions,
   type DataTableColumns,
   useMessage,
 } from "naive-ui";
-import { updateSubnet } from "@/api/subnets";
-import { EditIcon, SaveIcon, CancelIcon } from "@/icons";
+import { EditIcon } from "@/icons";
 import { fmtDateTime } from "@/utils/datetime";
 import { autoSort } from "@/composables/useTableSort";
 import { useCustomers } from "@/composables/useCustomers";
@@ -43,79 +35,23 @@ import { usePinnedSubnets } from "@/composables/usePinnedSubnets";
 import { useColumnPrefs } from "@/composables/useColumnPrefs";
 import ColumnPicker from "@/components/ColumnPicker.vue";
 import ExportButton from "@/components/ExportButton.vue";
+import SubnetEditModal from "@/components/SubnetEditModal.vue";
 import SwitchPortLabel from "@/components/SwitchPortLabel.vue";
 import OsIcon from "@/components/OsIcon.vue";
 import { useScanProbes, osFamilyLabel } from "@/api/scanProbes";
 const { t, locale } = useI18n();
 const { catalog } = useScanProbes();
 
-const { labelFor: customerLabelFor, options: customerOptions, ensureLoaded: ensureCustomersLoaded } = useCustomers();
+const { labelFor: customerLabelFor, ensureLoaded: ensureCustomersLoaded } = useCustomers();
 
-// 子網路編輯
+// 子網路編輯（表單統一走共用元件 SubnetEditModal.vue）
 const editShow = ref(false);
-const editSaving = ref(false);
-const editForm = ref({
-  description: "", customer_id: null as string | null,
-  is_pool: false, is_full: false, scan_enabled: false,
-  threshold_pct: null as number | null,
-  scan_agent_id: null as string | null,
-  gateway: "" as string, dns_servers: "" as string,
-  location_id: null as string | null,
-});
-const scanAgentOpts = ref<{ label: string; value: string }[]>([]);
-const locationOpts = ref<{ label: string; value: string }[]>([]);
-async function loadScanAgentOpts() {
-  try {
-    const { listScanAgents } = await import("@/api/phase3");
-    const ag = await listScanAgents();
-    scanAgentOpts.value = ag.items.map((a) => ({ label: a.name, value: a.id }));
-  } catch { /* silent */ }
-}
-async function loadLocationOpts() {
-  try {
-    const { listLocations } = await import("@/api/basic");
-    const r = await listLocations();
-    locationOpts.value = r.items.map((l) => ({ label: l.name, value: l.id }));
-  } catch { /* silent */ }
-}
 function openSubnetEdit() {
-  const s: any = subnet.value;
-  if (!s) return;
-  editForm.value = {
-    description: s.description ?? "",
-    customer_id: s.customer_id ?? null,
-    is_pool: !!s.is_pool, is_full: !!s.is_full,
-    scan_enabled: !!s.scan_enabled,
-    threshold_pct: s.threshold_pct ?? null,
-    scan_agent_id: s.scan_agent_id ?? null,
-    gateway: s.gateway ?? "", dns_servers: s.dns_servers ?? "",
-    location_id: s.location_id ?? null,
-  };
-  void loadScanAgentOpts();
-  void loadLocationOpts();
+  if (!subnet.value) return;
   editShow.value = true;
 }
-async function saveSubnetEdit() {
-  if (!subnet.value) return;
-  editSaving.value = true;
-  try {
-    await updateSubnet(subnet.value.id, {
-      description: editForm.value.description || null,
-      customer_id: editForm.value.customer_id ?? null,
-      is_pool: editForm.value.is_pool, is_full: editForm.value.is_full,
-      scan_enabled: editForm.value.scan_enabled,
-      threshold_pct: editForm.value.threshold_pct ?? null,
-      scan_agent_id: editForm.value.scan_agent_id ?? null,
-      gateway: editForm.value.gateway.trim() || null,
-      dns_servers: editForm.value.dns_servers.trim() || null,
-      location_id: editForm.value.location_id ?? null,
-    });
-    editShow.value = false;
-    await load(subnet.value.id);
-    msg.success(t("common.ok"));
-  } catch (e: any) {
-    msg.error(e?.response?.data?.detail ?? t("errors.server"));
-  } finally { editSaving.value = false; }
+function onSubnetSaved() {
+  if (subnet.value) void load(subnet.value.id);
 }
 const { isPinned, toggle: togglePinned, ensureLoaded: ensurePinsLoaded } = usePinnedSubnets();
 
@@ -926,54 +862,7 @@ onMounted(() => {
     @created="onCreated"
   />
 
-  <n-modal v-model:show="editShow" preset="card"
-           :title="`${t('common.edit')} ${subnet?.cidr ?? ''}`" style="width: 460px">
-    <n-form label-placement="left" label-width="110">
-      <n-form-item :label="t('common.description')">
-        <n-input v-model:value="editForm.description" />
-      </n-form-item>
-      <n-form-item :label="t('subnets.gateway')">
-        <n-input v-model:value="editForm.gateway" :placeholder="t('subnets.gateway_ph')" />
-      </n-form-item>
-      <n-form-item :label="t('subnets.dns_servers')">
-        <n-input v-model:value="editForm.dns_servers" :placeholder="t('subnets.dns_servers_ph')" />
-      </n-form-item>
-      <n-form-item :label="t('nav.locations')">
-        <n-select v-model:value="editForm.location_id" :options="locationOpts"
-                  clearable :placeholder="t('nav.locations')" />
-      </n-form-item>
-      <n-form-item :label="t('nav.customers')">
-        <n-select v-model:value="editForm.customer_id" :options="customerOptions"
-                  clearable filterable placeholder="—" />
-      </n-form-item>
-      <n-form-item :label="t('subnets.pool_full')">
-        <n-space>
-          <n-checkbox v-model:checked="editForm.is_pool">{{ t("subnets.is_pool") }}</n-checkbox>
-          <n-checkbox v-model:checked="editForm.is_full">{{ t("subnets.is_full") }}</n-checkbox>
-        </n-space>
-      </n-form-item>
-      <n-form-item :label="t('subnets.scan_enable')">
-        <n-switch v-model:value="editForm.scan_enabled" />
-      </n-form-item>
-      <n-form-item v-if="editForm.scan_enabled" :label="t('subnet_detail.scan_agent')">
-        <n-select v-model:value="editForm.scan_agent_id" :options="scanAgentOpts"
-                  clearable :placeholder="t('subnet_detail.scan_agent_ph')" />
-      </n-form-item>
-      <n-form-item :label="t('subnets.threshold_pct')">
-        <n-input-number v-model:value="editForm.threshold_pct" :min="0" :max="100" clearable />
-      </n-form-item>
-    </n-form>
-    <template #footer>
-      <n-space justify="end">
-        <n-button @click="editShow = false">
-          <template #icon><n-icon><CancelIcon /></n-icon></template>{{ t("common.cancel") }}
-        </n-button>
-        <n-button type="primary" :loading="editSaving" @click="saveSubnetEdit">
-          <template #icon><n-icon><SaveIcon /></n-icon></template>{{ t("common.save") }}
-        </n-button>
-      </n-space>
-    </template>
-  </n-modal>
+  <SubnetEditModal v-model:show="editShow" :editing="subnet" @saved="onSubnetSaved" />
 </template>
 
 <style scoped>
