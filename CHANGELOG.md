@@ -4,6 +4,54 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.128] — 2026-06-10
+
+### Fixed / Improved
+- **External reverse proxy + OIDC / Microsoft 365 (Entra ID) login**: the frontend now parses
+  the token the backend returns in the URL fragment after the OIDC/SAML callback (previously
+  ignored → stuck on the login page); the backend merges **ID Token** claims into userinfo —
+  Entra ID returns `groups` only in the ID Token (not the Graph userinfo endpoint), so admin-
+  group mapping now matches. Added `deploy/nginx/jt-ipam-external-proxy.{conf,snippet}`
+  templates (HTTP-only, no HSTS, `X-Forwarded-Proto` passthrough) and a README "Mode C —
+  external reverse proxy" section (set `APP_PUBLIC_URL`/CORS to your domain, forward the proto).
+- **Install (Ubuntu 24.04)**: `ensure_node` no longer pipes the NodeSource output to `/dev/null`
+  and now **verifies Node ≥ 18** after install, otherwise it stops with a clear remedy — fixes a
+  silent Node-install failure that left the frontend unbuilt while the run "looked" successful.
+- **AI chat**: when Ollama is disabled / unreachable / misconfigured, a **friendly, actionable**
+  error is shown (pointing to Admin → LLM / AI) instead of a cryptic string.
+- **Circuits**: fixed the empty "associated device" dropdown when editing (device query exceeded
+  the backend `page_size` cap); circuit table gains Device / Description columns and a localized
+  Status column.
+- **Tables (scan agents / device detail)**: tightened column widths so the actions column no
+  longer overflows, empty columns no longer hog width, and MAC / timestamps no longer wrap.
+- **NAT rules**: moved under the Advanced menu; clicking a row opens a read-only view (fields
+  disabled), editing is via the pencil action.
+- **Update banner**: a bordered + shadowed clickable box with an SVG icon (not an emoji) and
+  clearer wording.
+- **Per-table page size** now remembers the user preference (`user_preferences.page_size`).
+
+## [0.4.114] — 2026-06-09
+
+### Added / Improved
+- **DNS records page**: filter by server / type (type dropdown shows per-type counts), a source
+  column showing the originating DNS server, IP matching resolved against the **actual IP value**
+  in `ip_addresses` (fixes "the IP is in IPAM but shows no match"), and a column picker. DNS sync
+  now keeps only **A / AAAA / PTR** (IP↔name mapping) — CNAME/MX/TXT etc. are no longer stored.
+- **IP addresses**: new `in_dhcp_lease` (migration 0074) auto-managed by the OPNsense DHCP-lease
+  sync; phpIPAM import now labels `discovery_source='phpipam'` (was mislabeled "manual"); OPNsense
+  DHCP/ARP sync scopes the IP lookup to the firewall's subnets + `limit(1)`, fixing
+  `MultipleResultsFound` on overlapping subnets sharing an IP.
+- **Global search**: matches **partial MAC prefixes** (e.g. `bc:24`); DNS-record hits open
+  Advanced → DNS records with the name pre-filled.
+- **Racks**: the merged single-card view can export **SVG / PNG / draw.io** (all racks side-by-
+  side); draw.io device boxes are now square to match the on-screen diagram.
+- **AI chat**: the zero-dependency Markdown renderer now supports **GFM tables**.
+- **MCP**: new `list_dns_records` tool; AI answers about subnet usage call real data instead of
+  generic CIDR arithmetic.
+- **IP request approval emails** include a **clickable link** (routes through login then back to
+  the approval page if not signed in).
+- The IP change log renders `switch_port` as **device@port**.
+
 ## [0.4.113] — 2026-06-09
 
 ### Added — IP request approval gate + notifications

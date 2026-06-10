@@ -4,6 +4,41 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.128] — 2026-06-10
+
+### 修正 / 改善
+- **外部反向代理 + OIDC / Microsoft 365(Entra ID) 登入**：OIDC/SAML callback 後前端能正確解析
+  網址 fragment 裡帶回的 token（原本會被忽略、卡在登入頁）；後端合併 **ID Token** 的 claims —
+  Entra ID 的 `groups` 只在 ID Token、不在 Graph userinfo，補上後管理員群組才比對得到。新增
+  `deploy/nginx/jt-ipam-external-proxy.{conf,snippet}` 外部代理模式範本（HTTP-only、不送 HSTS、
+  `X-Forwarded-Proto` 透傳）；README 新增「模式 C — 外部反向代理」與 `APP_PUBLIC_URL` 等設定提醒。
+- **安裝（Ubuntu 24.04）**：`ensure_node` 不再把 NodeSource 安裝輸出丟 `/dev/null`，且安裝後**驗證
+  Node ≥ 18**，否則直接停止並印出手動補裝指令——修「Node 安裝靜默失敗、前端沒 build、卻看似安裝成功」。
+- **AI 對話**：Ollama 未啟用 / 連不上 / 設定錯時，改顯示**友善且可行動**的錯誤訊息（指向 管理 → LLM / AI），
+  不再是 `Ollama is disabled` / `transport: …` 這類難懂字串。
+- **電路**：編輯時「關聯裝置」下拉空白修復（裝置查詢 `page_size` 超過後端上限被擋）；電路表格新增
+  「關聯裝置 / 說明」欄（欄位選擇器可選），狀態欄改顯示中文（active → 使用中）。
+- **掃描代理 / 裝置詳情**：表格欄寬收緊——操作欄不再被擠出右側、空欄不再吃滿寬度、MAC 與時間不再折行。
+- **NAT 規則**：從頂層選單移到「進階」群組；點某一列改為**唯讀檢視**（欄位禁用），編輯改走操作欄鉛筆鈕。
+- **更新提示橫幅**：改為有框 + 陰影、整塊可點的方塊、SVG icon（非 emoji），文案改「系統有更新，請按此重新整理載入最新版本」。
+- **全站表格每頁筆數**改為記住使用者偏好（`user_preferences.page_size`，跨裝置同步）。
+
+## [0.4.114] — 2026-06-09
+
+### 新增 / 改善
+- **DNS 記錄頁**：可依伺服器 / 型別篩選（型別下拉帶筆數統計）、來源欄顯示**來源 DNS 伺服器**、IP 對應
+  改用**實際 IP 值**查 `ip_addresses`（修「子網路裡明明有、卻顯示查無對應」）、欄位選擇器；DNS 同步只
+  保留 **A / AAAA / PTR**（IP↔名稱對應用途），不再存 CNAME/MX/TXT 等。
+- **IP 位址**：新增 `in_dhcp_lease`（migration 0074）由 OPNsense DHCP lease 同步**自動標記/撤銷**；
+  phpIPAM 匯入來源改標 `phpipam`（原本一律誤標「手動」）；OPNsense DHCP/ARP 同步加上防火牆關聯子網路
+  範圍 + `limit(1)`，修重疊網段同 IP 的 `MultipleResultsFound` 整批 crash。
+- **全域搜尋**：支援**部分 MAC 前綴**（如 `bc:24`）；DNS 記錄搜尋結果改導向「進階 → DNS 記錄」並把名稱代入搜尋。
+- **機櫃**：合併單卡也能匯出 **SVG / PNG / draw.io**（整機房多櫃並排）；draw.io 方塊改**直角**與畫面一致。
+- **AI 對話**：零相依 Markdown 渲染器支援 **GFM 表格**（修表格亂掉）。
+- **MCP**：新增 `list_dns_records` 工具；AI 回答「某子網路還有幾個可用 IP」改呼叫實際資料而非純 CIDR 算術。
+- **IP 申請審核通知信**：加上**可點連結**（未登入先導登入、登入後自動返回審核頁）。
+- IP 異動記錄的 `switch_port` 顯示改「**裝置@埠號**」。
+
 ## [0.4.113] — 2026-06-09
 
 ### 新增 — IP 申請審核關卡 + 通知
