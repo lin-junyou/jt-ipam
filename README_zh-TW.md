@@ -23,7 +23,7 @@ phpIPAM 老使用者幾乎零學習成本；以現代技術全新打造（非基
 
 - **DNS**：PowerDNS、BIND 9、OPNsense Unbound、Univention UCS、Microsoft Windows DNS（讀取正反解狀態，可選擇性推送記錄）
 - **LibreNMS**：裝置同步、ARP / FDB 抓取、上線狀態互補、自動加入監控
-- **基礎設施**：Proxmox VE、Wazuh、OPNsense
+- **基礎設施**：Proxmox VE、Wazuh、OPNsense（別名 / 規則 / NAT 同步）
 - **Graylog**：提供 IP→主機名稱/FQDN 的 DSV 對照表端點，供 Graylog「DSV File from HTTP」資料配接器抓取
 - **本地 AI**：LLM Server 自然語言查詢 + 語意搜尋（資料不外送），並提供 MCP server（stdio / Streamable HTTP）；實測搭配 `gemma4:26b` 效果良好
 
@@ -46,19 +46,45 @@ jt-ipam 會**即時**產生一份 IP → 主機名稱 / FQDN 的對照表，讓 
 - 在 Graylog 的「DSV File from HTTP」配接器：URL 填上方網址、分隔符依格式選逗號或 Tab、**Key column = 1、Value column = 2**
 - token 逐次驗證、可隨時重新產生；設定頁直接提供可複製的完整對照表網址
 
+## 核心物件
+
+`區段 → 子網路 → IP 位址`，外加 `裝置` / `機櫃` / `地點`、`客戶`（管理單位）、`VLAN` / `VRF`、`NAT`、OPNsense 防火牆，以及 IEEE OUI 廠商對照表（每月更新）。
+
 ## 權限（RBAC）
 
-物件級權限，支援 7 種物件類型（單位 / 區段 / 子網路 / IP / 裝置 / 機櫃 / 地點），階層繼承（授權上層自動涵蓋下層）、「全部」wildcard、5 個內建角色（系統管理員 / 唯讀檢視者 / 網路操作員 / 稽核員 / 部門管理員）。清單、搜尋、拓樸圖、下拉選單都依可見範圍過濾。
+物件級權限，涵蓋 **7 種物件類型**（客戶 / 區段 / 子網路 / IP / 裝置 / 機櫃 / 地點）：
+
+- **階層繼承** — 授權上層（如某客戶或區段）自動涵蓋其下所有物件（子網路 → IP；地點 → 機櫃 → 裝置）
+- 每種物件類型可用 **「全部」wildcard**
+- **5 個內建角色** — 系統管理員、唯讀檢視者、網路操作員、稽核員、部門管理員
+- 可見性處處強制：清單端點、全域搜尋、拓樸圖、所有下拉選單，永遠只會出現使用者可見的物件。預設關閉（deny-by-default）。
 
 ## 安全（OWASP Top 10:2025）
 
-安全是 day-one 需求，所有設計對齊 **OWASP Top 10:2025**，詳見 [`SECURITY_zh-TW.md`](SECURITY_zh-TW.md)。強制 TLS（nginx 反代或 uvicorn 自簽二擇一）、argon2id + TOTP、敏感欄位應用層加密、SHA-256 稽核鏈、SSRF 白名單。
+安全是 day-one 需求，每個模組與 PR 都對齊 **OWASP Top 10:2025**，詳見 [`SECURITY_zh-TW.md`](SECURITY_zh-TW.md)。
+
+- **強制 TLS** — 二擇一：nginx 反代終止 TLS（`BACKEND_TLS_MODE=nginx`），或 uvicorn 直接掛自簽憑證（`BACKEND_TLS_MODE=direct`）
+- A01 — deny-by-default RBAC、物件級檢查（如上）
+- A02 — argon2id 密碼雜湊；儲存的敏感資料（DNS 憑證 / SNMP / API token）應用層加密
+- A03 — 參數化 SQLAlchemy、嚴格 Pydantic v2 驗證、CSP + 輸出跳脫
+- A05 — HSTS、CSP、X-Frame-Options、Referrer-Policy
+- A07 — TOTP MFA、帳號鎖定、HttpOnly+Secure+SameSite cookie、API token TTL
+- A08 — SHA-256 稽核鏈
+- A09 — 結構化稽核記錄
+- A10 — 所有對外整合走 SSRF 白名單；封鎖 metadata / link-local
 
 ## 技術堆疊
 
-後端 FastAPI + SQLAlchemy 2.0(async) + PostgreSQL 16 + Alembic + Pydantic v2；前端 Vue 3 + TypeScript + Naive UI + Pinia；本地 AI 走 LLM Server + pgvector。**不使用容器**：systemd + apt（適合 Proxmox VE LXC / 裸機）。
+| 層 | 選用 |
+|------|--------|
+| 後端 | Python 3.12 · FastAPI · SQLAlchemy 2.0（async）· asyncpg · Alembic · Pydantic v2 |
+| 資料庫 | PostgreSQL 16（原生 `inet`/`cidr`/`macaddr`）+ pgvector |
+| 前端 | Vue 3 · TypeScript · Vite · Naive UI · Pinia · vue-i18n |
+| 認證 | argon2id · TOTP · 短效 JWT + refresh |
+| AI | LLM Server（本地）· pgvector · MCP server |
+| 部署 | systemd + nginx + apt 套件 —— **不需 Docker image**（適合虛擬機 / 容器） |
 
-## 安裝
+## 安裝（單機 / 虛擬機 / 容器）
 
 > Debian 12 / Ubuntu 22.04+（64 位元）。強制 HTTPS。
 >
@@ -71,7 +97,9 @@ jt-ipam 會**即時**產生一份 IP → 主機名稱 / FQDN 的對照表，讓 
 curl -fsSL https://raw.githubusercontent.com/jasoncheng7115/jt-ipam/main/scripts/bootstrap.sh | sudo bash
 ```
 
-升級：`sudo bash /opt/jt-ipam/scripts/jt-ipam.sh upgrade`（**腳本內含 `git pull`**，直接跑即可）。詳見 [`docs/INSTALL.md`](docs/INSTALL.md)。
+腳本會安裝 `postgresql-16` / `python3.12` / `nginx` / `redis`，建立 `jtipam` 系統帳號與 PG 角色，產生金鑰寫入 `/etc/jt-ipam/backend.env`，跑 `alembic upgrade head`，build 前端並啟用 `jt-ipam-backend.service`。
+
+升級：`sudo bash /opt/jt-ipam/scripts/jt-ipam.sh upgrade`（**腳本內含 `git pull`**，直接跑即可），接著備份 → 相依 → alembic → build → 重啟。詳見 [`docs/INSTALL.md`](docs/INSTALL.md)。
 
 ### 首次登入與重置管理員密碼
 
@@ -145,6 +173,32 @@ sudo nginx -t && sudo systemctl reload nginx
 2. **外部 nginx 轉發時要送** `proxy_set_header X-Forwarded-Proto $scheme;`（=https）與 `Host $host;`；本機範本會把它透傳給後端（避免後端誤判成 http、Secure cookie 設不起來）。
 3. **OIDC Redirect URI** 在 IdP 與 jt-ipam UI（系統設定 → SSO → OIDC）都填 `https://ipam.your-domain.com/api/v1/auth/oidc/callback`。注意 **UI 存過的 DB 值優先於 .env**，改 .env 後要在 UI 再存一次。
 > HSTS 由持有憑證的外部 nginx 送出，本機（HTTP）不送。
+
+## 專案結構
+
+```
+jt-ipam/
+├── docs/              # 規格、安全、資料模型、API 參考
+├── backend/           # FastAPI app
+│   └── app/
+│       ├── core/      # config / db / audit / safe_http / encrypted_secret
+│       ├── models/    # SQLAlchemy 2.0
+│       ├── schemas/   # Pydantic v2
+│       ├── api/v1/    # REST API
+│       ├── services/  # 商業邏輯（ai / oui / opnsense / topology / search / permission）
+│       ├── mcp/       # MCP server + tools（給 LLM 用戶端）
+│       └── plugins/   # 插件系統
+├── frontend/          # Vue 3 + TS
+│   └── src/{views,components,composables,api,stores,i18n,router}
+└── scripts/           # jt-ipam.sh（install/upgrade/uninstall）、ci.sh、oui_refresh.py
+```
+
+## 藍圖進度
+
+- **Phase 1（完成）** — phpIPAM 對等功能 + 改良（區段/子網路/IP/VLAN/VRF/NAT/裝置/機櫃/地點/IP 申請、TOTP/API-Token/RBAC、phpIPAM 匯入、CSV/RIPE/TWNIC、視覺化子網路格、強制 TLS）
+- **Phase 2（完成）** — 多家 DNS + 深度 LibreNMS 整合（裝置/ARP/FDB/實際狀態）+ 異常偵測 + SHA-256 稽核鏈 + pgvector AI 語意搜尋
+- **Phase 3（完成）** — 租戶/聯絡人/佈線/電力/VPN/虛擬化 + Proxmox VE 同步 + Cytoscape 拓樸 + OIDC/SAML SSO + OPNsense 防火牆同步 + Wazuh agent 盤點
+- **Phase 4（完成、已縮減範圍）** — MCP server + 本地 LLM 自然語言（LLM Server）+ 插件機制
 
 ## 授權
 

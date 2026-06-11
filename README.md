@@ -82,9 +82,9 @@ Security is a day-one requirement; every module and PR is checked against **OWAS
 | Frontend | Vue 3 · TypeScript · Vite · Naive UI · Pinia · vue-i18n |
 | Auth | argon2id · TOTP · short-lived JWT + refresh |
 | AI | LLM Server (local) · pgvector · MCP server |
-| Deploy | systemd + nginx + apt packages — **no containers** (Proxmox VE LXC / bare-metal friendly) |
+| Deploy | systemd + nginx + apt packages — **no Docker image needed** (VM / container friendly) |
 
-## Install (single host / Proxmox VE LXC)
+## Install (single host / VM / container)
 
 > Debian 12 / Ubuntu 22.04+ (64-bit). TLS is mandatory.
 >
@@ -197,8 +197,6 @@ jt-ipam/
 - **Phase 2 (done)** — multi-vendor DNS + deep LibreNMS integration (device/ARP/FDB/effective-status) + anomaly detection + SHA-256 audit chain + pgvector AI semantic search
 - **Phase 3 (done)** — Tenancy/Contacts/Cabling/Power/VPN/Virtualization + Proxmox VE sync + Cytoscape topology + OIDC/SAML SSO + OPNsense firewall sync + Wazuh agent inventory
 - **Phase 4 (done, scoped)** — MCP server + local-LLM natural language (LLM Server) + plugin mechanism
-
-**Out of scope:** HA deployment, Ansible Collection, Terraform Provider, Zimbra/Odoo integration, Docker/Helm/K8s.
 
 ## License
 
