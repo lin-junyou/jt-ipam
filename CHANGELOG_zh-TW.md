@@ -4,6 +4,15 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.176] — 2026-06-15
+
+### 修正
+- **Debian 13（trixie）安裝不再卡在「`postgresql-16-pgvector` 無法安裝」而中斷**（客戶回報）。原本安裝腳本
+  只挑「server 套件」再於退路硬寫 PG 16，但 PGDG 對 trixie 目前只出新版（17/18）的 pgvector、沒有
+  `postgresql-16-pgvector` → 整支安裝 FATAL。改成挑選「**server 與對應 `postgresql-N-pgvector` 兩者都裝得
+  到**」的 PostgreSQL 版本（先在預設庫試 16 → 17 → 18，找不到才補 PGDG 再找一次），不再硬退回 16。
+  純安裝腳本改動。
+
 ## [0.4.175] — 2026-06-15
 
 ### 變更

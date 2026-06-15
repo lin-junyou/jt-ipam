@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.176] — 2026-06-15
+
+### Fixed
+- **Install on Debian 13 (trixie) no longer dies on `postgresql-16-pgvector` not installable** (customer
+  report). The installer used to pick a PostgreSQL server package by itself and, on fallback, hardcode
+  PG 16 — but PGDG for trixie currently ships pgvector only for its newer versions (17/18), so
+  `postgresql-16-pgvector` was missing and the install aborted. It now selects a PostgreSQL version where
+  **both** the server **and** the matching `postgresql-N-pgvector` are installable (tries 16 → 17 → 18 in
+  the default repos first, then adds PGDG and retries), instead of forcing 16. Install-script only.
+
 ## [0.4.175] — 2026-06-15
 
 ### Changed
