@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.190] — 2026-06-17
+
+### Changed
+- **Circuits table now shows bandwidth, static IP and gateway columns.** These fields already existed on
+  the circuit (and in the edit form) but weren't surfaced in the list; added a human-readable bandwidth
+  column (↓down / ↑up, formatted as Gbps/Mbps/kbps) plus the static IP/CIDR and gateway columns (all
+  toggleable in the column picker).
+
 ## [0.4.189] — 2026-06-17
 
 ### Security

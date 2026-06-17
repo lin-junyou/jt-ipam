@@ -4,6 +4,12 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.190] — 2026-06-17
+
+### 變更
+- **電路表格新增「速率 / 固定 IP / 閘道」欄位。** 這些欄位電路本來就有（編輯表單也有），只是清單沒顯示；
+  補上易讀的速率欄（↓下載 / ↑上傳，自動換算 Gbps/Mbps/kbps）以及固定 IP/CIDR、閘道欄（都可在欄位選擇器開關）。
+
 ## [0.4.189] — 2026-06-17
 
 ### 安全性
