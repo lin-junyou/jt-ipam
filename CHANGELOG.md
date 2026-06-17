@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is loosely
 based on [Keep a Changelog](https://keepachangelog.com/); versions track
 `frontend/package.json` / `backend/app/version.py`.
 
+## [0.4.188] — 2026-06-17
+
+### Changed
+- **The scan-agent installer no longer installs avahi (mDNS) by default.** `avahi-utils` depends on
+  `avahi-daemon`, so installing it brings up a resident service that listens on UDP 5353 and announces
+  the host over mDNS — an unwanted side effect on most servers. The installer now installs only `nmap`
+  (OS) and `samba-common-bin` (NetBIOS), neither of which starts a daemon; mDNS is opt-in via
+  `JT_IPAM_ENABLE_MDNS=1`. (The main server install/upgrade never touched these.) The agent
+  install-help note now flags that avahi-utils brings up avahi-daemon.
+
 ## [0.4.187] — 2026-06-17
 
 ### Changed

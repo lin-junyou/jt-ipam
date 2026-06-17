@@ -4,6 +4,14 @@
 [Keep a Changelog](https://keepachangelog.com/)；版本對應
 `frontend/package.json` / `backend/app/version.py`。
 
+## [0.4.188] — 2026-06-17
+
+### 變更
+- **掃描代理 installer 預設不再安裝 avahi（mDNS）。** `avahi-utils` 相依 `avahi-daemon`，裝了會起一個常駐
+  服務、監聽 UDP 5353 並對外廣播主機 mDNS——對多數伺服器是不必要的副作用。installer 現在預設只裝 `nmap`
+  （OS）與 `samba-common-bin`（NetBIOS），兩者都不起 daemon；mDNS 改用 `JT_IPAM_ENABLE_MDNS=1` 才裝。
+  （主伺服器安裝/升級從來不碰這些。）安裝說明也標明 avahi-utils 會一併啟動 avahi-daemon。
+
 ## [0.4.187] — 2026-06-17
 
 ### 變更
